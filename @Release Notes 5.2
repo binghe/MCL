@@ -1,0 +1,915 @@
+;;;   MCL is licensed under the terms of the Lisp Lesser GNU Public
+;;;   License , known as the LLGPL and distributed with MCL as the
+;;;   file "LICENSE".  The LLGPL consists of a preamble and the LGPL,
+;;;   which is distributed with MCL as the file "LGPL".  Where these
+;;;   conflict, the preamble takes precedence.  
+;;;
+;;;   MCL is referenced in the preamble as the "LIBRARY."
+;;;
+;;;   The LLGPL is also available online at
+;;;   http://opensource.franz.com/preamble.html
+
+
+
+
+MCL 5.2 Release notes
+
+MCL 5.2 requires OSX 10.3 or later.
+It does not run on OS9. It does not run on Intel processors.
+
+Unicode Support
+---------------
+
+Text in Fred is Unicode (UTF16). 
+
+Strings read from files or typed by the user are Unicode. 
+The types base-string (8 bits per character) and extended-string(16 bits per character) still both exist. 
+A string may be a base-string if all the UTF16 character codes
+are <= #xff, i.e in ASCII/Latin1 range.
+
+Of course, the function ccl::convert-string can create a string in any encoding.
+In that case it is up to the user to keep track of the encoding by
+creating an encoded string (ccl::make-encoded-string) or simply knowing the intended 
+usage of the result.
+
+Fred files may be saved as Mac encoded (as always) or as UTF!6 or UTF8.
+If saved as UTF16 or UTF8 the appropriate BOM (byte order mark) will
+be placed at the beginning of the file. If saved as UTF16 the mac-file-type
+will be set to :|utxt|.
+When inserting a file in Fred, the BOM if any is heeded as is the file-type
+:|utxt|. The same is true when compiling or loading a source file.
+
+There is also the option to save with "Unix line endings". All carriage
+returns in the Fred buffer will be changed to linefeeds prior to
+writing the content. Note that this is blind substitution. The
+content is not parsed. After all, it may not be a Lisp file.
+
+Copy and Paste handle Unicode style (:|ustl| = #$kScrapFlavorTypeUnicodeStyle ) 
+as well as Unicode text (:|utxt| = #$kScrapFlavorTypeUnicode).
+Copy does put-scrap of :TEXT, :|utxt|, :|styl|, and :|ustl|.
+Paste heeds :|utxt| and :|ustl| if available, else uses :TEXT and :|styl| if available.
+
+
+Menu-title, menu-item-title, window-title, control-title, ... all work with Unicode titles.
+
+One issue is that char-upcase or char-downcase of a UTF16 character
+is not always one character.
+For char-upcase this happens for 75 chars out of 834 non-ascii lower case characters
+- some are 3 characters long.
+The hack of the day is to return two values - the input character and a string containing the true 
+upper case representation.
+For char-downcase this happens for 1 character, uppercase I with a dot.
+In this case two values are returned, lowercase i and a string of lower case i followed by "diacritic
+non spacing dot above"
+Similarly nstring-upcase, nstring-downcase, and nstring-captitalize cannot always 
+destructively modify the given string because the required length may be different.
+If that is the case a new string is returned. Nstring-upcase and nstring-capitalize
+will also return a new string if the input string is a base string containing 
+#\µ or #\Ø (lower case y umlaut). In that case, although the length is the same,
+the result must be an extended-string.
+
+Drawing text
+--------------
+
+Becuase strings in MCL 5.2 are Unicode, drawing strings that
+contain  non 7bit-ascii characters using e.g.
+(with-pstrs ((sp string start end))
+  (#_drawstring sp))
+will not do the right thing. #_drawstring and #_drawtext expect a Mac encoded string
+whose encoding/script corresponds to the encoding/script implied by the font in effect
+in the current grafport. The same applies to usage of #_stringwidth and #_textwidth.
+
+ 
+Instead use any of the following to draw strings.
+
+grafport-write-string (string start end &optional ff ms color)  
+   - optional args ff ms and color are new in MCL 5.2, string can contain multiple lines.
+
+ If ff, ms, and color are nil the values used are those of the current grafport.
+ Text position is determined by the pen position in the current grafport.
+ The vertical position of the pen determines the baseline of the first line of text.
+ Drawing is done using #_ATSUDrawText.
+
+Use font-codes-string-width or font-codes-string-width-with-eol if you need to measure
+text that will be drawn with grafport-write-string.
+
+draw-string-in-rect (string rect
+                                &key
+                                (start 0)(end (length string))
+                                truncation justification compress-p
+                                ff ms color)
+ - new function, string can contain multiple lines
+
+Draw a string in a rectangle in the coordinates of the current focused view. 
+Draws using #_ATSUDrawText.
+
+Start and end specify the range of the string to draw.
+
+Truncation can be one of
+:none or NIL  - dont truncate
+:start 
+:center or :middle  
+:end
+
+Justification can be one of
+:none or :left or NIL
+:center or :middle
+:end or :right
+
+If compress-p is true, the text is squished/squashed/compressed if truncation
+other than :none or NIL is also specified.
+
+If ff, ms, and color are nil the values are obtained from the current grafport.
+
+Use font-codes-string-width or font-codes-string-width-with-eol to measure text
+that will be drawn with draw-string-in-rect. 
+
+draw-theme-text-box (text rect &optional (text-justification #$tejustcenter)
+                              truncwhere (active-p t))
+
+Draws using #_DrawThemeTextBox.
+
+The active-p argument is new in MCL 5.2b5. If nil the text is drawn somewhat gray,
+otherwise is drawn in the fore-color of the current grafport. 
+String can contain multiple lines.
+Uses ff and ms of current grafport.
+Use font-codes-string-width-for-control to measure.
+
+Added function grafport-write-char which can be used instead of #_drawchar
+
+By the way, the text/transfer mode in ms has no effect when drawing with ATSUI.
+
+Text drawing functions use #_ATSUSetTransientFontMatching which enables automatic font substitution.
+"Transient font matching allows ATSUI to automatically substitute
+glyphs from other fonts if the specified styles do not contain
+glyphs for all the characters in the text."
+Thanks to Takehiko Abe.
+
+Inline input for CJK keyboards
+-----------------
+
+Added class tsm-document-mixin which results in making the object a #_NewTSMDocument
+when installed in a window.
+
+Tsm-document-mixin enables inline input for Chinese, Japanese, and Korean keyboards.
+Also enables Hebrew and Arabic in the keyboard menu, though those do not yet work
+correctly. The typed text draws correctly but the blinking caret does
+not appear in the correct place.
+
+The classes tsm-fred-item and fred-dialog-item include tsm-document-mixin.
+Fred windows use tsm-fred-item.
+
+Thanks to Takehike Abe <keke@gol.com>
+
+CarriageReturn vs. Linefeed
+-----------------
+
+In MCL 5.2  the characters #\return (carriage return - (code-char 13)), 
+#\linefeed (line feed - (code-char 10)), (code-char #x2028) (aka line separator),
+and (code-char #x2029) (aka paragraph separator) all serve the same purpose,
+possibly to end a comment that begins with semicolon, and always to cause the succeeding
+text to be drawn on the next line.
+However, some users wish to share text files with applications that handle
+only one or the other character as end of line. Also CVS and other source code
+control systems  may be confused unless line endings are consistent.
+To deal with the issues we have the special variable *preferred-eol-character*:
+
+ if the value is #\linefeed then all carriage returns in a Fred buffer are changed to
+ #\linefeed when the buffer is written to a file.
+
+ If the value is #\return then all #\linefeeds in a Fred buffer are changed to #\Return when
+the buffer is written to a file.
+
+ If the value is anything else, then no substitution occurs when the file is written.
+(unless "Unix line endings" is chosen from the format popup in the Choose File dialog,
+in which case all occurrences of #\return are changed to #\linefeed)
+
+If the value of *preferred-eol-character* is #\linefeed then typing the return key
+will result in inserting #\linefeed in a fred-buffer.
+
+The initial value of *preferred-eol-character* is NIL.
+
+As far as CRLF line endings are concerned the only support occurs on opening
+a file in a Fred window, primarily so the content is easier for the user to view.
+
+The special variable *transform-CRLF-to-preferred-eol* if true
+will cause all instances of #\return followed by #\linefeed to be transformed
+to  a single character in the Fred buffer.
+If *preferred-eol-character* is #\linefeed
+then CRLF -> #\linefeed
+else CRLF -> #\return
+
+The initial value of  *transform-CRLF-to-preferred-eol* is NIL.
+
+If any of the transformations is attempted and finds it actually needs to
+make a change in a read-only Fred buffer, the "Modify read only" dialog will be invoked.
+
+Please note that all of the above transformations are "blind"
+so source code strings containing #\return or #\linefeed may be modified.
+That may be a bad thing, a good thing, or neutral depending on the intended usage
+of the strings.
+
+There are two very simple new functions in MCL 5.2,
+char-eolp and char-code-eolp which are frequently useful as
+replacements for (eq char #\return) or the character code equivalent.
+The symbols are exported from the :ccl package.
+
+Added line separator and paragraph separator to the variables wsp&cr and symbol-specials.Proxy Icon---------Fred windows have a proxy icon in the title bar.The  proxy icon behaves in the "standard" way when clicked. Command-click in the proxy icon or the window title
+shows a pop-up menu of the directory hierarchy
+from which one can activate the Finder showing the chosen directory.
+Click and drag on the proxy icon allows dragging the Fred file to another folder.
+If one later saves or reverts the file it will be to/from the new location.If the referenced file has been moved or renamed:
+   Command-click in the ProxyIcon will notify of the rename, and
+   will change the window title.
+   Window-save  will ask if you wish to save to new location, 
+   original location, or cancel.
+  If the file has been moved to trash it is deemed deleted.
+
+Added methods application-pathname-to-window-title as follows:
+
+(defmethod application-pathname-to-window-title ((app lisp-development-system)
+                                                 (window fred-window)
+                                                 pathname)
+  (pathname-to-window-title pathname nil)  ;; include directory info
+  )
+
+
+(defmethod application-pathname-to-window-title ((app application)
+                                                 (window window)
+                                                 pathname)
+  (pathname-to-window-title pathname t)  ;; omit directory info
+  )
+
+Fred window title-------------
+Application-pathname-to-window-title is called by MCL Fred functions to determine how to represent
+the file name in the window title. The returned value should be a string.
+
+The function pathname-to-window-title now takes an optional argument. If true
+directory information will be omitted. The default value is *pathname-window-title-name-only*,
+the initial value of which is NIL.
+
+
+
+
+
+
+Interfaces
+-----------
+
+The Pascal interface translator has been rewritten to translate C headers.
+The Interfaces included with MCL 5.2 are translations of the OSX 10.3 headers.
+This may require some changes to existing code. 
+"OLDROUTINENAMES" are no longer included.
+
+There are a few header files that have not been translated, mostly pertaining to
+Perl, Java, Python and c++.
+
+There is more explanation due here. For example one can write:
+
+(#_CGRectGetMaxX 1.0s0 1.0s0 2.0s0 2.0s0)
+or
+(rlet ((foo :CGPoint :x 1.0s0 :y 1.0s0)
+       (bar :CGSize :width 2.0s0 :height 2.0s0))
+  (#_CGRectGetMaxX :CGPoint foo :CGSize bar)) 
+or
+(rlet ((blitz :CGRect 
+              :origin.x 1.0s0
+              :origin.y 1.0s0
+              :size.width 2.0s0
+              :size.height 2.0s0))              
+  (#_CGRectGetMaxX :CGRect blitz))
+
+To use #_uptime whose definition now is:
+
+(deftrap-inline "_UpTime" 
+   ((returnArg (:pointer :UnsignedWide))
+    
+   )                                            ; AVAILABLE_MAC_OS_X_VERSION_10_0_AND_LATER
+   nil
+() )
+
+do:
+(rlet ((thetime :unsignedwide))
+  (#_UpTime thetime)
+  (unsignedwide->integer thetime))
+
+Or to use #_CGRectIntegral whose definition now is:
+(deftrap-inline "_CGRectIntegral" 
+   ((returnArg (:pointer :CGRect))
+      ;  :cgpoint
+    (x :single-float)
+    (y :single-float)  ;  :cgsize
+    (width :single-float)
+    (height :single-float)
+   )
+   nil
+() )
+
+do:
+(rlet ((outrect :CGRect))
+  (#_CGRectIntegral outrect 12.2s0 9.3s0 3.0s0 4.5s0))
+
+or:
+(rlet ((outrect :CGRect)
+       (inrect :CGRect 
+               :origin.x 12.2s0
+               :origin.y 9.3s0
+               :size.width 3.0s0
+               :size.height 4.5s0))
+  (#_CGRectIntegral outrect :CGRect inrect))
+  
+
+Mach-O support
+---------------
+
+As a first step in making MCL a Mach-O application rather than a CFM
+application, "traps" are looked up in Mach-O frameworks rather than
+CFM shared libraries. 
+This happens if the variable ccl::*dont-use-cfm* is true at compile time.
+The initial value is T.
+Of the roughly 600 "traps" that MCL uses, 1 is accesed via the CFM shared library
+CarbonLib. The rest are found in the Mach-O framework 
+"Carbon.framework"
+We also will look in "System.framework", "ApplicationServices.framework" and "AGL.framework"
+if need be. To add to the list of possible frameworks, see the function all-bundles
+in "ccl:l1;l1-init.lisp".
+
+
+This may require some changes to existing code.
+For example:
+
+(add-pascal-upp-alist 'activate-proc #'(lambda (procptr)(#_neweventhandlerupp procptr)))
+(defpascal activate-proc ... )
+
+should be changed to:
+
+(add-pascal-upp-alist-macho 'activate-proc "NewEventHandlerUPP")
+(defpascal activate-proc ...)
+
+Case matters in the string arg to add-pascal-upp-alist-macho.
+
+Frameworks
+-------------
+
+Add-framework-bundle (framework-name &key pathname findfolder-args add-too) adds
+to the frameworks to be looked in for function pointers or data pointers.
+
+;; pathname if provided should be a lisp pathname to the folder containing the framework
+;; findfolder-args if provided should be a list of 2 elements the vrefnum and foldertype to pass to #_fsfindfolder
+;; it is an error to specifly both pathname and findfolder-args
+;; if neither provided the default is to use (#_FSFindFolder #$kOnAppropriateDisk #$kFrameworksFolderType ...;;If add-to is true, the pathname or findfolder-args
+;; will be added to a list of places to search for the framework-name.
+
+
+Remove-framework-bundle (framework-name) removes knowledge of the named framework.
+It dows not unload the bundle.
+
+
+Alert dialogs
+---------
+
+Added function standard-alert-dialog which uses #_CreateStandardAlert and #_RunStandardAlert.
+It is called by y-or-n-dialog and several other functions. It replaces previous uses
+of message-dialog.Standard-alert-dialog has a :position keyword argument which defaults to
+:front-window ( -> #$kWindowAlertPositionParentWindow). 
+Other possibities are :center-front-window, :main-screen, or :center-main-screen.
+Y-or-n-dialog calls standard-alert-dialog with :position :main-screen.
+Button strings need not be simple strings. If message is not a string, coerce to same.
+Allows keywords for alert-type.
+ 
+
+
+Miscellaneous
+---------
+
+Added window-type :overlay-window
+
+Window-ask-save uses #_NavCreateAskSaveChangesDialog.
+
+Window-revert uses #_NavCreateAskDiscardChangesDialog.
+
+Added functions xalphabetic-p, xupper-case-p, xlower-case-p, xalphanumeric-p, etc. 
+which return T if the character argument is such.
+
+Added Search/Replace to Tools menu.
+
+All patches to MCL 5.1 have been included.
+
+Some obsolete functions such as %path-to-iopb have been removed.
+
+
+
+
+Lisp Heap
+---------
+The size of the Lisp heap has been increased by a small amount.
+
+MCL 5.1
+Lisp Heap:   955461632 (933068K)
+
+MCL 5.2
+Lisp Heap:  1025635480 (978.1 MB)
+
+Bugs fixed
+------------
+
+Fixed sbit and (setf sbit) which are optimized versions of bit and (setf bit) for
+accessing simple bit vectors. They didn't work at all.
+Now function correctly. Very old bug.
+
+Fixed VERY poor performance accesing an array of (unsigned-byte 32) elements
+when result is a bignum.
+
+Get Info dialog - when invoked with a selection in the frontmost Fred window,
+the inserted text is drawn in the correct font.
+
+
+Export *load-verbose* from CCL package.
+Export *dont-use-cfm*.
+
+Added 2 more characters to wsp&cr and symbol-specials - line separator and paragraph separator
+
+Changes to time functions such as encode-universal-time 
+so that daylight saving time is as determined by the OS rather
+than MCL's function daylight-saving-time-p which is wrong for some countries and states.
+
+Fix float type confusion. Many years ago MCL had 2 floating point types, short-float which
+was an immediate value (like a fixnum) similar to IEEE single-float but with some precision
+bits missing to make room for the immediate tag, and double-float which was an IEEE double
+float. At that time the CommonLisp type short-float was imlemented as MCL's short-float. The CommonLisp
+types single-float, double-float, and long-float were all implemented as MCL's double-float
+(IEEE double-float).  With the advent of the PPC, MCL changed to using true IEEE single-float,
+with the intention that CommonLisp short-float and single-float be 
+implemented as MCL (and IEEE) single-float, and CommonLisp double-float and long-float
+be implemented as MCL (and IEEE) double-float. Unfortunately, some confusion remained about
+float types. For example, the initial value of *read-default-float-format* was 'single-float
+but the actual effect was to use double-float. To actually read as single-float one had to
+set *read-default-float-format* to 'short-float. And if the value of foo was 1.0s0,
+(typep foo 'single-float) would return NIL. Hopefully all such confusion is eliminated
+in MCL 5.2. The initial value of *read-default-float-format* is 'double-float which
+has the intended effect. If *read-default-float-format* is 'short-float or 'single-float
+float numbers with unqualified exponent will be read as MCL (and IEEE) single-float.
+
+Fix float overflow and underflow behavior to be consistent with the desired FPU mode.
+Initially (get-fpu-mode) returns:
+(:ROUNDING-MODE :NEAREST :OVERFLOW T :UNDERFLOW NIL :DIVISION-BY-ZERO T :INVALID T :INEXACT NIL)
+which has the effect that a floating point overflow will cause an error. Underflow will not error.
+Fix float-underflow to return negative 0 (rather than positive 0)  when appropriate.
+
+Opentransport.lisp
+;; use CFM version of #_newotnotifyUPP
+
+Navservices.lisp
+Choose-new-file-dialog and choose-new-directory-dialog - :prompt default is NIL i.e.
+omit the redundant "New file name ..." at the top of the dialog. 
+Chose-new-directory-dialog - doesn't include Format pop-up which is meaningless for directories.Fix bug that coused a structure reference to nil to report the error as
+"Unknown trap from kernel ..." rather than "value NIL is not of the expected type STRUCTURE".
+Very old bug.
+
+
+
+
+
+----------------
+
+Release Notes MCL5.2b5
+
+
+
+
+Modifications
+----------
+
+
+Window-save does :supersede vs :overwrite so errors less likely to be "fatal" to
+the existing file content.
+
+Bug fixes
+----------------
+
+Fix Preferences dialog when double-click in the table on a variable name that
+has T or Nil value. Sometimes would "process" the double-click twice
+so value would quickly change from T to NIL and back to T or vice versa.
+Old bug.
+
+
+Internalize-scrap ((handler text-scrap-handler)) - don't error if text-ptr NIL
+
+
+%buffer-insert-file - error rather than crash if data fork and resource fork are seriously out of sync.
+Shouldn't happen but has been known to occur at least once.
+
+
+The internal function find-encoding-for-uchar has been slightly changed so that
+the characters 1/4 1/2 3/4 will be saved correctly in Mac encoded files.
+Also change for some greek characters such as alpha, beta ... for a similar reason.
+
+Find-method fixed for eql specializers.
+ (defgeneric fun (arg) (:method ((arg (eql 'a))) arg))
+ (find-method #'fun nil '((eql a)))
+works now, previously did not.
+Old bug.
+
+
+New features
+----------
+
+Pass arguments from records that contain single-floats to traps that expect single-floats without consing.
+
+Window title for Fred window more likely to show logical pathname rather than full pathname.
+
+
+Special variable *save-as-original-format* affects the format of a file written from Fred
+via ctrl-x ctrl-s or cmd-s (any means that does not involve invoking a choose-file-dialog).
+If *save-as-original-format* is T (the initial value), then if the file was originally 
+utf16 or utf8 it will be saved in that format, otherwise in Mac encoded format.
+If *save-as-original-format* is nil (and in the absence of a choice to the contrary from a choose-file-dialog)
+the file will be saved in Mac encoded format.
+
+
+Backwards incompatiblity
+--------------
+
+If a Fred file containing text in font/encoding "Symbol" or "Zapf Dingbats" is saved 
+from MCL 5.2 it will not be read correctly in MCL 5.1
+It is also the case that if a file containing fonts "Symbol" or "Zapf Dingbats" is saved 
+from MCL 5.1, it will not be read as one might expect in MCL 5.2.
+
+In MCL 5.1 the string "able" will be drawn as
+the Greek characters alpha, beta, lambda, epsilon if the font is "Symbol" though
+the string actually contains the 7bit-ascii characters
+a, b, l, and e. In MCL 5.2, if you set the font to Symbol and press the "a" key
+the character inserted is the Unicode "alpha" character the character code
+of which is 945. In MCL 5.2 if you select text containing "able" and change
+the font to Symbol, what will be drawn still looks like "able".
+In MCL 5.2 the character code of a character determines what it "says"
+(what you see), not a combination of the character code and the font used to draw it.
+
+
+
+Warning Note
+-------------
+
+Saving Fred buffers to files in Mac encoded format can cause problems. 
+There are many Unicode characters which cannot be represented in any Mac encoding.
+
+
+Known bugs
+-----------
+
+In the interfaces files there are some record definitions that reference undefined
+types. That occurs in record definitions that MCL users probably do
+not need. But as a consequence the functions load-all-records, load-all-mactypes
+and load-all-traps may error. 
+As a workaround MCL 5.2b5 will warn and proceed if an error is
+encountered. Hopefully the problem with undefined types will be fixed
+in a future release.
+
+Inserting Greek characters via the character palette does not work reliably. 
+Typing with Greek keyboard does work.
+Typing with US keyboard and the insertion font set to Symbol does work.
+
+(rlet ((inrect :cgrect :origin.x 3.0s0 :origin.y 2.0s0 :size.width 1.2s0 :size.height 2.4s0))
+  (rlet ((outrect :cgrect))
+    (#_cgrectoffset outrect :cgrect inrect 1.0s0 2.0s0)))
+does not produce the correct result in outrect.
+
+nor does:
+(rlet ((outrect :cgrect))
+  (#_cgrectoffset outrect 3.0s0 2.0s0 1.2s0 2.4s0 1.0s0 2.0s0))
+
+(#_cgrectgetmaxx :cgrect inrect) and (#_cgrectgetmaxx 3.0s0 2.0s0 1.2s0 2.4s0)
+do work.
+
+
+
+
+----------
+
+5.2b6
+
+
+Improvements
+-------------
+
+
+
+Fred Revert
+ If file no longer exists, show a warning dialog and return rather than error.
+ Also the warning dialogs for either file modified since last written/read or 
+file deleted occur before asking if "you really want to discard changes", rather than after.
+
+Fred Save
+If file has been moved or renamed, ask if want to save as original pathname or new pathname.
+
+Dialogs that include file names show logical pathnames rather than physical
+pathnames when possible.
+
+
+
+The feature whereby option-click in an arrow-dialog-item did Copy of the table-sequence
+has been removed on the grounds that is non-intuitive and overloads the meaning of
+the option key modifier.
+For example, in the "Definitions of ..." dialog:
+Option click on the  "Find it" button does the Find action and closes the dialog.
+Double-click on an item in the table does the Find action for the clicked item.
+Option double-click does the Find action and closes the dialog.
+Previously option double-click or option single-click in the table would also Copy
+the table-sequence which would overwrite any previous scrap that the
+user might have created and wished to preserve.
+
+Modify compilation of (incf (slot-value instance slot-name)) when slot-name is
+known  at compile time. Resulting execution time is faster by a factor of 7.
+(same applies to decf).
+
+Slot-value and set-slot-value are faster.
+
+FSOpen conses less.
+
+Probe-file conses less.
+
+Export draw-theme-text-box and draw-string-in-rect from CCL package.
+
+Preferences - added *preferred-eol-character*, use y-or-n-dialog for warnings rather
+than message-diaog.
+
+Improve scrolling speed when mouse held down in the scroll-down or scroll-up button 
+of a vertical scroll-bar in a Fred window.
+
+In printed representation of pathnames referencing existing file system objects, alphabetic
+case more likely to correspond to file system state (but not guaranteed).
+
+
+Bug Fixes
+----------
+
+Fix Inspector bug when inspecting a string that is not a simple-string.
+
+Compare/merge fixed to treat all eol characters as equivalent.
+
+Ed-current/next-top-level-sexp - work for any eol character followed by #\(
+
+Ed-indent-for-lisp and ed-indent-differently - fix so any eol character works.
+
+Fix bug that could cause minor problems when saving a fred window after
+splitting then unsplitting the window.
+
+
+Fix bug if an item of class tsm-document-mixin (i.e. fred-dialog-item or
+fred-item) was removed from a window, then reinstalled in
+the same or different window.
+
+Fix  bug in the type system which caused (typep :bar '(and keyword (member :foo :bar)))
+to fail. (very old bug)
+
+Fix bug that could result in a fred-dialog-item drawing outside it's bounds.
+
+Fix handling of "quoted" characters in filenames. If the name of a file
+on disk is "foo.bar.baz.lisp", it is represented internally as
+name = "foo¶.bar¶.baz" , type = "lisp". Prior to MCL 5.2b6, the window
+title for the file in Fred would include the ¶ quote characters and Save As ...
+would use the name with quotes as the suggested file name. Now
+the window title and suggested file name are shown as the name appears on disk.
+As a more extreme example, a file named "¶foo.bar.lisp"
+would previously cause an error when attempting to open it in Fred via a Choose File
+dialog.
+
+If deleting a temporary file fails (because Spotlight, Norton AntiVirus, or
+some other application has it open), the warning message re: "file moved to trash ..."
+no longer occurs. The move to trash is done quietly. 
+In some situations if a delete fails, the
+file is renamed (in the existing folder) to nnnnn.tem (where "nnnnn"
+is a unique name) and left for posterity.
+
+Fix compilation of calls to traps that expect an argument of type :ostype when an integer
+value (most likely 0) is provided. The integer value is allowed.
+
+
+Fix some bugs in drawing of theme focus rectangle and in resizing framed views
+i.e. editable-text-dialog-item (aka fred-dialog-item), scrolling-fred-view-with-frame,
+and arrow-dialog-item.
+
+Fix truncate of most-negative-fixnum.
+
+Collect and once-only macros are now in :ccl package. (previously in :ppc package)
+
+View-draw-contents of static-text-dialog-item fixed for back-color or theme-background of containing window.
+
+Buffer-substring-p case independent for character arg.
+
+*read-default-float-format* = 'single-float.
+
+Char-code-limit = 65536 (was 65535).
+
+Fix bug in where-to-word-wrap.
+
+Open-application-document handles type :|utxt|.
+
+%path-from-fsspec simpler - result may still be wrong because fsspecs are deficient.
+
+Pixel-2-char - fix usage of :boolean.
+
+Fix machine-type in *environs*.
+
+Create-cfstr2 handles non simple-string.
+
+Fmakunbound return unmangled setf name.
+
+Paste-utxt may update the default-button of containing view.
+
+Fix paste-utxt and paste-styled-utxt for empty scrap - from James Anderson.
+
+Paste-styled-utxt heeds *paste-with-styles*. Paste-styled-utxt may inherit :bold if listener,
+and fixed for replacing selection.
+
+Declare is  not special-operator-p, ??
+
+Function handlep less likely to error.
+
+Defvar sets documentation even if already bound.
+
+Similar-as-constants-p - 1 not same as 1.0
+
+Fix dispatch-macro-character for #\: to allow e.g. #:|6|. Fix write-pname for e.g. #:|6|
+
+Errors in package functions now signal package-error vs error.
+Package functions allow character as package-name.
+
+Check for :allocation :instance or :class in some places.
+
+Slot-id-value, set-slot-id-value fix to deal with non-standard wrapper or non-standard slotd.
+Fix bug in slot-id->slotd when no map.
+
+Some errors are more specific. "~S can't be FUNCALLed or APPLYed." is undefined-function error.
+"Too few arguments (no opt/rest)" is program-error. Throw error is control-error.
+Fix condition-arg for various array errors, add invalid-dimension-error and invalid-subtype-error.
+
+Update-class moved from ensure-class to shared-initialize.
+
+Class-has-a-forward-referenced-superclass-p less likely to blow the stack.
+
+Xxx-slot-definition-class methods check :allocation = :instance or :class.
+
+Add-accessor-methods - warn if same named accessor for different slots?
+
+No more :initargs for :direct-slots in slots-class.
+
+(setf class-name) calls reinitialize-instance.
+
+Fixed bug in compute-allowable-keywords-vector.
+
+Coerce to 'float defaults to single-float.
+Coerce  errors are type-errors. 
+Coerce character -> string works.
+Coerce may error if requested type is base-string and input contains non base-characters.
+
+Count heeds from-end argument.
+
+Check type of predicate in functions every, notevery, notany, and some.
+
+Concatenate accepts cons as output-type-spec - same as list.
+
+Remove - do check-count.
+
+Call-with-focused-dialog-item of simple-view is without-interrupts.
+
+Setf macro - fix values case i.e. not needed.
+
+Dotimes and dolist put the block in right place.
+
+Dont forbid T clause in etypecase.
+
+Defclass - multiple slot options passed as a list vs. individually.
+Omit test for :allocation = :instance or :class, done elsewhere per MOP.
+
+
+Fix defstruct for case (defstruct (sbt-11 (:constructor sbt-11-con (&aux a b)))  a (b 0 :type integer)).
+Fix for conc-name provided NIL.
+
+Fix to subst, ldiff, union - :key provided nil = > :key #'identity.
+
+Errors in merge are type-errors,
+
+Function pointerp now equivalent to macptrp.
+
+More usages of #\newline or #\return -> char-eolp.
+Use *preferred-eol-character* if non nil in a couple of places.
+Function terminator-predicate handles eol.
+
+
+Minor improvements and modifications
+--------------
+
+New varioble *use-app-resources* used by save-application. Initial value is T.
+
+Lose need for subprims shared library.
+
+Choose-new-file-dialog - user can provide format-query-p nil as another way to say no format popup.
+
+Font-number-from-name faster in usual case.
+
+Add support for resources in data fork. Open-resource-file, with-open-resource-file get data-fork-p arg.
+Open-resource-file-from-fsref, %open-res-file2, fscreate-res-file get optional data-fork-p arg.
+
+String comparisons heed *string-compare-non-literal*.  if true then e.g. (o-umlaut == o, umlaut).
+Initial value is NIL.
+
+String-upcase, downcase, and capitalize faster for non-ascii strings. 
+
+
+Case-key-tester - don't want to descend list structure more than once.
+
+Set-view-size/position for focus-rect-mixin - do nothing if unchanged.
+
+
+Fred-dialog-item heeds part-color :text.
+
+Draw-theme-text-box - faster in truncate case.
+
+Set-cursor handles keywords for theme cursors from Terje N.
+Cursors no longer in resource fork, *gc-cursor* is pointer not handle.
+
+Add method print-object of periodic-task from Toomas Altosaar.
+
+A pathname function conses less.
+
+Require calls  choose-file-dialog with :button-string "Load"
+
+Add some keyboard and processor types,
+
+Slightly faster reader/writer methods.
+
+Faster accessor methods.
+
+Callers - finds callers in pascal functions containing closures.
+
+
+Examples
+--------
+
+animated-cursor.lisp
+;; - use #_SetAnimatedThemeCursor - no more resources
+
+Standard-sheet-dialog.lisp
+ new file for creating standard sheet
+
+processes.lisp
+ ;;; launch-application uses fsrefs, fix get-creator-path though still uses fsspec
+
+fred-drag.lisp
+;; handle :|utxt|
+;; launch-app-with-docs use fsrefs, pretty much a copy of launch-application (in processes.lisp)
+
+drag-aware-list.lisp
+;; handle :|utxt|
+
+grapher.lisp
+;; fixes for opaque grafport
+
+drag-and-drop.lisp
+;;; %resolve-alias-handle-without-dialog uses #_FSResolveAliasWithMountFlags (so use fsref not fsspec) 
+;;; drag-get-drop-location-as-path was wrong
+
+contextual-menu-mixin.lisp
+;;; *contextual-menu-cursor* is in MCL now
+
+assorted-fred-commands.lixp
+;; comment out autoloading-edit-definition - reader macros do it already
+;; usages of #\newline => various eol functionsAdded bevel-button-dialog-item from Alex Repenning.Fix bugs in "ccl:examples;picture-files.lisp" and "ccl:examples;mouse-copy.lisp".
+Modify clone-window in "ccl:examples;assorted-fred-commands.lisp" so the cloned window gets
+a proxy icon.Updated "ccl:examples;anticipat-symbol-complete.lisp" fram Alex Repenning.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+
+
+
+
+
+ 
+
+
+
+

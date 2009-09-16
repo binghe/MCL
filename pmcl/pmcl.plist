@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
+<plist version="0.9">
+<dict>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>lisp</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string>129</string>
+            <key>CFBundleTypeName</key>
+            <string>MCL Lisp source file</string>
+            <key>CFBundleTypeOSTypes</key>
+            <array>
+                <string>TEXT</string>
+	        <string>utxt</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+        
+        
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string></string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string>131</string>
+            <key>CFBundleTypeName</key>
+            <string>MCL Heap File</string>
+            <key>CFBundleTypeOSTypes</key>
+            <array>
+                <string>HEAP</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>cfsl</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string>133</string>
+            <key>CFBundleTypeName</key>
+            <string>MCL Compiled file</string>
+            <key>CFBundleTypeOSTypes</key>
+            <array>
+                <string>PFSL</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+    </array>
+    <key>CFBundleIconFile</key>
+    <string>128</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.digitool.MCL5.2b6</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleLongVersionString</key>
+    <string>5.b6, Copyright (c) 1995-2007 Digitool, Inc.</string>
+    
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>5.2b6</string>
+    <key>CFBundleSignature</key>
+    <string>CCL2</string>
+    <key>CFBundleVersion</key>
+    <string>4.1</string>
+    <key>LSPrefersCarbon</key>
+    <true/>
+    <key>NSApplescriptEnabled</key>
+    <string>Yes</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright (c) 1995-2007 Digitool, Inc.</string>
+</dict>
+</plist>

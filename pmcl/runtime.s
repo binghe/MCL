@@ -1,0 +1,1 @@
+	export ._ptrgl12	csect ._ptrgl12{GL}._ptrgl12:	lwz       r0,0x0000(r12)	stw       RTOC,0x0014(SP)	mtctr     r0                        ; CTR = 9	lwz       RTOC,0x0004(r12)	bctr	end
