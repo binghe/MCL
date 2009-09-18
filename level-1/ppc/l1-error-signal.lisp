@@ -314,8 +314,13 @@
                     (frc (ldb (byte 5 6) instr)))
                (declare (fixnum minor fra frb frc))
                (if (= minor 12)         ; FRSP
-                 (%err-disp-internal $xcoerce (list (xp-double-float xp frc) 'short-float) frame-ptr)
-                (flet ((coerce-to-op-type (double-arg)
+                 (multiple-value-bind (status control) (xp-fpscr-info xp)
+                   (%error (make-condition (fp-condition-from-fpscr status control)
+                                           :operation 'coerce
+                                           :operands (list (xp-double-float xp frc) 'short-float))
+                           ()
+                           frame-ptr))                 
+                 (flet ((coerce-to-op-type (double-arg)
                           (if (eql major 63)
                             double-arg
                             (handler-case (coerce double-arg 'short-float)

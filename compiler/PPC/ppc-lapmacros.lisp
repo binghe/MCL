@@ -515,15 +515,21 @@
   (let* ((offset (ppc::kernel-global short-float-zero)))
     `(lfs ,fp-reg ,offset rnil)))
 
-(defppclapmacro fp-check-binop-exception (rt ra rb)
+(defppclapmacro fp-check-binop-exception (insn)
   `(progn
+     ,insn
      (if (:cr1 :gt)                     ; set if enabled exception has occurred
-       (uuo_fpuXbinop ,rt ,ra ,rb))))
+       (progn
+         (bla .SPfpu-exception)
+         ,insn))))
 
-(defppclapmacro fp-check-unaryop-exception (rt ra rb)
+(defppclapmacro fp-check-unaryop-exception (insn)
   `(progn
+    ,insn
      (if (:cr1 :gt)                     ; set if enabled exception has occurred
-       (uuo_fpuXbinop ,rt ,ra ,rb))))
+       (progn
+         (bla .SPfpu-exception)
+         ,insn))))
 
 
 ; Functions to access exception frames

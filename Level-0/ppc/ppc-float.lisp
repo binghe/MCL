@@ -846,8 +846,7 @@
     (stw rzero sc.l sp)
     (lfd fp0 fl.h sp)
     (lfd fp1 sc.h sp)
-    (fmul. fp2 fp0 fp1)
-    (fp-check-binop-exception fp2 fp0 fp1)
+    (fp-check-binop-exception (fmul. fp2 fp0 fp1))
     (stfd fp2 ppc::double-float.value result)
     (blr)))
 
@@ -859,8 +858,7 @@
     (slwi imm0 imm0 IEEE-single-float-mantissa-width)
     (stw imm0 sc.h sp)
     (lfs fp1 sc.h sp)
-    (fmuls. fp2 fp0 fp1)
-    (fp-check-binop-exception fp2 fp0 fp1)
+    (fp-check-binop-exception (fmuls. fp2 fp0 fp1))
     (stfs fp2 ppc::single-float.value result)
     (blr)))
                    
@@ -918,8 +916,7 @@
 (defppclapfunction %double-float->short-float ((src arg_y) (result arg_z))
   (clear-fpu-exceptions)
   (get-double-float fp0 src)
-  (frsp. fp1 fp0)
-  (fp-check-unaryop-exception fp1 fp0 fp0)
+  (fp-check-unaryop-exception (frsp. fp1 fp0))
   (put-single-float fp1 result)
   (blr))
   
