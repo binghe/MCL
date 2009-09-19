@@ -143,7 +143,7 @@
  ;#P"ccl:examples;eval-server.pfsl"
  #P"ccl:examples;fasl-concatenate.lisp"
  #P"ccl:examples;FF examples;ff-example.c"
- #P"ccl:examples;FF examples;ff-example¶.c.o"
+; #P"ccl:examples;FF examples;ff-example¶.c.o"
  #P"ccl:examples;FF examples;ff-example.lisp"
  #P"ccl:examples;FF examples;ff-example.test"
  #P"ccl:examples;font-sampler.lisp"
@@ -485,7 +485,7 @@
  #P"ccl:LICENSE"
  #P"ccl:LGPL"
  #P"ccl:MCL Help"
- #P"ccl:MCL Help Map.cfsl"
+ #P"ccl:library;MCL Help Map.cfsl" ;; should be "ccl:MCL Help Map.cfsl" ?
  ;#P"ccl:MCL Help Map.lisp"  ;; is this really needed - not really but the one in ccl:library; may be helpful
  ;#P"ccl:MCL Help Map.pfsl"
  #P"ccl:OpenTransportSupport"
@@ -496,7 +496,7 @@
 
 ;; change this for where you want to put the files
 (setf (logical-pathname-translations "SHIP")
-      `(("**;*.*.*" "topdog:MCL-5.2-final:**:*.*.*")))
+      `(("**;*.*.*" "ccl:MCL-5.2-final;**;*.*.*")))
 
  
 #|
