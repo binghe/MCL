@@ -521,12 +521,8 @@
               "ship:SourceServer;**;"
               "SHIP:WOOD;**;"))
 
-(ship-file "ship:gather-sources-all.lisp")
-
- 
- 
-
-
+(ship-file "ship:gather-sources-all.lisp"); adds the running lisp:(get-the-files2 "SHIP:;;" `(,(get-app-pathname)))
+(get-the-files2 "SHIP:" '(#P"ccl:pmcl-kernel"   #P"ccl:pmcl-OSX-kernel"))
 Remember: 
 
 Then do ship-files on dest files to remove ckid resources etc. ("CCL:lib;ship-files") we forgot
