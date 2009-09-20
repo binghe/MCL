@@ -1,4 +1,4 @@
-
+;;;-*- Mode: Lisp; Package: CCL -*-
 ;; 05/22/04 lose binhex and fast-slot-value
 ;; 02/26/04 lose mactcp and ccl:library;interfaces.lisp, ff-call-68k
 ;; 01/24/04 loze ff.lisp/pfsl, anarchie-interface. loze all ccl:sourceserver;fasls; and help-map
