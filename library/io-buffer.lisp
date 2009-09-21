@@ -19,7 +19,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Modification History
-;;;;;; Terje stream-clear-output no longer hangs;;; -------- MCL 5.2
+;;;;;; -------- MCL 5.2
 ;;; io-buffer-write-file - check start > filesize vs start >= filesize
 ;;; -------- 5.1 final
 ;;; %%ptr-difference uses current macptr lap defs.
@@ -626,7 +626,7 @@ IO-BUFFER-FORCE-OUTPUT stream io-buffer count finish-p
           (setq code (logand code #xff))))
       (%io-buffer-write-byte io-buffer code))))
 
-(defmethod stream-clear-output ((stream buffered-output-stream-mixin))  ;; was  buffered-character-...  (using-stream-io-buffer (io-buffer stream :speedy t)     (let ((outsize (io-buffer-outsize io-buffer)))      (decf (io-buffer-bytes-written io-buffer) (io-buffer-outpos io-buffer))      (setf (io-buffer-outcount io-buffer)            (io-buffer-outbuf-size io-buffer) ; # should it use outsize if non-nil?            #+ignore (or outsize 0))) ; setting io-buffer-outbuf-size to 0 leads to an endless loop when advancing the stream    (%setf-macptr (io-buffer-outptr io-buffer) (io-buffer-outbuf io-buffer))))
+(defmethod stream-clear-output ((stream buffered-output-stream-mixin))  ;; was  buffered-character-...  (using-stream-io-buffer (io-buffer stream :speedy t)     (let ((outsize (io-buffer-outsize io-buffer)))      (decf (io-buffer-bytes-written io-buffer) (io-buffer-outpos io-buffer))      (setf (io-buffer-outcount io-buffer)(or outsize 0)))    (%setf-macptr (io-buffer-outptr io-buffer) (io-buffer-outbuf io-buffer))))
 
 (defvar *buffered-character-output-stream-mixin-class*
   (find-class 'buffered-character-output-stream-mixin))
