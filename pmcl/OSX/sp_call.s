@@ -1932,7 +1932,13 @@ ffcalladdress_proper:
 	__(extsh imm1,imm1)
 	__(box_fixnum(arg_z,imm1))
 #endif
-1:	
+1:
+        /* Shouldn't be needed, either */
+        __(lis r31,0x4330)
+        __(lis r30,0x8000)
+        __(stw r31,-8(sp))
+        __(stw r30,-4(sp))
+        __(lfd fp_s32conv,-8(sp))
 	__(lwz sp,0(sp))
 	__(lwz vsp,lisp_frame.savevsp(sp))
 	__(vpop_saveregs())
