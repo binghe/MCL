@@ -9,7 +9,7 @@
 ;; aug 01 akh include lib;%source-files%
 ;; 01/24/01 akh - get interfaces;index too
 ;; 07/07/01 akh lose logical-dir-compatibility, probably should lose library;traps too - did that already
-;;   and library;records.lisp
+;;   and library;records.lisp(in-package :ccl)
 
 (defun dir-plus-wild (directory)
   (append directory '(:wild-inferiors)))
@@ -489,38 +489,37 @@
  ;#P"ccl:MCL Help Map.lisp"  ;; is this really needed - not really but the one in ccl:library; may be helpful
  ;#P"ccl:MCL Help Map.pfsl"
  #P"ccl:OpenTransportSupport"
- #P"ccl:gather-sources-all.lisp")
+ #P"ccl:gather-distribution.lisp")
 *interface-files*
 *appearance-files*
 *pmcl-files*))
 
 (setf (logical-pathname-translations "SHIP")
-      `(("**;*.*.*" ,(format nil  "ccl:RMCL ~A;**;*.*.*" (lisp-implementation-short-version)))))
- 
-#|
+      `(("**;*.*.*" ,(format nil  "ccl:RMCL ~A;**;*.*.*" (lisp-implementation-short-version)))))(defun gather-distribution ()
+  
+  (get-the-files2 "SHIP:" *files-to-ship*)
+  (dolist (f (directory "ship:**;CVS;*"))
+    (delete-file f))
+  
+  (require :ship-files)
+  (ship-files ; :VERBOSE T
+   :directories
+   '("ship:compiler;**;"
+     "ship:examples;**;"
+     "ship:interface tools;**;"
+     "ship:level-0;**;"
+     "ship:level-1;**;"
+     "ship:lib;**;"
+     "ship:library;**;"
+     ;"ship:interfaces;**;"
+     ;"ship:inspector;**;"
+     ;"ship:series;**;"
+     "ship:SourceServer;**;"
+     "SHIP:WOOD;**;"))
+  
+  (ship-file "ship:gather-distribution.lisp")    ; adds the running lisp:  (get-the-files2 "SHIP:;;"                  `(,(get-app-pathname)))  
+  (get-the-files2 "SHIP:"                  '(#P"ccl:pmcl-kernel"                    #P"ccl:pmcl-OSX-kernel"))    (get-the-files2 (concatenate 'string "SHIP:" patch-directory-prefix (lisp-implementation-version-less-patch) ";")                  (directory #P"ccl:Patches;**;*.lisp")))#|
 
-(get-the-files2 "SHIP:" *files-to-ship*)
-(dolist (f (directory "ship:**;CVS;*"))
-  (delete-file f))
-
-(require :ship-files)
-(ship-files ; :VERBOSE T
-            :directories
-            '("ship:compiler;**;"
-              "ship:examples;**;"
-              "ship:interface tools;**;"
-              "ship:level-0;**;"
-              "ship:level-1;**;"
-              "ship:lib;**;"
-              "ship:library;**;"
-              ;"ship:interfaces;**;"
-              ;"ship:inspector;**;"
-              ;"ship:series;**;"
-              "ship:SourceServer;**;"
-              "SHIP:WOOD;**;"))
-
-(ship-file "ship:gather-sources-all.lisp"); adds the running lisp:(get-the-files2 "SHIP:;;" `(,(get-app-pathname)))
-(get-the-files2 "SHIP:" '(#P"ccl:pmcl-kernel"   #P"ccl:pmcl-OSX-kernel"))
 Remember: 
 
 Then do ship-files on dest files to remove ckid resources etc. ("CCL:lib;ship-files") we forgot
