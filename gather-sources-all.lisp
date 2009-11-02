@@ -494,10 +494,8 @@
 *appearance-files*
 *pmcl-files*))
 
-;; change this for where you want to put the files
 (setf (logical-pathname-translations "SHIP")
-      `(("**;*.*.*" "ccl:MCL-5.2-final;**;*.*.*")))
-
+      `(("**;*.*.*" ,(format nil  "ccl:RMCL ~A;**;*.*.*" (lisp-implementation-short-version)))))
  
 #|
 
