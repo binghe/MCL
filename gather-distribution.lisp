@@ -59,7 +59,7 @@
                                 new-f)
                               f))
                         files))
-    (dolist (f files)
+    (dolist (path files)     (dolist (f (if (wild-pathname-p path) (directory path) (list path)))
       (when (not (logical-pathname-p f))
         (setq f (back-translate-pathname-11 f (list "ccl")))  ;; dont back up to ccl:interfaces;
         ;(cerror "a" "b")
@@ -69,7 +69,7 @@
         ;(cerror "our" "pukw ~a ~s " f  new-dest)
         (if  (and (not (probe-file f))(string-equal  (pathname-type f)(pathname-type *.pfsl-pathname*)))
           (compile-file (merge-pathnames *.lisp-pathname* f) :verbose t :output-file f))
-        (copy-file f new-dest :if-exists :supersede)))))
+        (copy-file f new-dest :if-exists :supersede))))))
 
 (defun back-translate-pathname-11 (path &optional hosts)
   (dolist (host %logical-host-translations%)
@@ -80,7 +80,7 @@
             (setq newpath (translate-pathname path (cadr trans) (car trans) :reversible t))
             (return-from back-translate-pathname-11 newpath)))))))
 
-(setq *files-to-ship*
+(defparameter *files-to-ship*
 
 (append (list #P"ccl:compiler;lambda-list.lisp"
  #P"ccl:compiler;nx-base-app.lisp"
@@ -217,7 +217,7 @@
  #P"ccl:Level-0;l0-pred.lisp"
  #P"ccl:Level-0;l0-symbol.lisp"
  #P"ccl:Level-0;l0-utils.lisp"
- #P"ccl:Level-0;nfasload.lisp"
+ #P"ccl:Level-0;nfasload.lisp" #P"ccl:Level-0;ppc;*.lisp"
 
  #P"ccl:level-1;l1-aprims.lisp"
  ;#P"ccl:level-1;l1-base-app.lisp"
@@ -495,30 +495,30 @@
 *pmcl-files*))
 
 (setf (logical-pathname-translations "SHIP")
-      `(("**;*.*.*" ,(format nil  "ccl:RMCL ~A;**;*.*.*" (lisp-implementation-short-version)))))(defun gather-distribution ()
-  
-  (get-the-files2 "SHIP:" *files-to-ship*)
-  (dolist (f (directory "ship:**;CVS;*"))
-    (delete-file f))
-  
-  (require :ship-files)
-  (ship-files ; :VERBOSE T
-   :directories
-   '("ship:compiler;**;"
-     "ship:examples;**;"
-     "ship:interface tools;**;"
-     "ship:level-0;**;"
-     "ship:level-1;**;"
-     "ship:lib;**;"
-     "ship:library;**;"
-     ;"ship:interfaces;**;"
-     ;"ship:inspector;**;"
-     ;"ship:series;**;"
-     "ship:SourceServer;**;"
-     "SHIP:WOOD;**;"))
-  
-  (ship-file "ship:gather-distribution.lisp")    ; adds the running lisp:  (get-the-files2 "SHIP:;;"                  `(,(get-app-pathname)))  
-  (get-the-files2 "SHIP:"                  '(#P"ccl:pmcl-kernel"                    #P"ccl:pmcl-OSX-kernel"))    (get-the-files2 (concatenate 'string "SHIP:" patch-directory-prefix (lisp-implementation-version-less-patch) ";")                  (directory #P"ccl:Patches;**;*.lisp")))#|
+      `(("**;*.*.*" ,(format nil  "ccl:RMCL ~A;**;*.*.*" (lisp-implementation-short-version)))))(defun gather-distribution ()    (flet ((ship-file (file)           (funcall 'ship-file file))         (ship-files (&rest rest)           (apply 'ship-files rest)))
+    
+    (get-the-files2 "SHIP:" *files-to-ship*)
+    (dolist (f (directory "ship:**;CVS;*"))
+      (delete-file f))
+    
+    (require :ship-files)
+    (ship-files ; :VERBOSE T
+     :directories
+     '("ship:compiler;**;"
+       "ship:examples;**;"
+       "ship:interface tools;**;"
+       "ship:level-0;**;"
+       "ship:level-1;**;"
+       "ship:lib;**;"
+       "ship:library;**;"
+       ;"ship:interfaces;**;"
+       ;"ship:inspector;**;"
+       ;"ship:series;**;"
+       "ship:SourceServer;**;"
+       "SHIP:WOOD;**;"))
+    
+    (ship-file "ship:gather-distribution.lisp")        ; adds the running lisp:    (get-the-files2 "SHIP:;;"                    `(,(get-app-pathname)))    
+    (get-the-files2 "SHIP:"                    '(#P"ccl:pmcl-kernel"                      #P"ccl:pmcl-OSX-kernel"))        (get-the-files2 (concatenate 'string "SHIP:" patch-directory-prefix (lisp-implementation-version-less-patch) ";")                    (directory #P"ccl:Patches;**;*.lisp"))        ))#|
 
 Remember: 
 
