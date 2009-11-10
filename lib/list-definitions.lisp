@@ -44,24 +44,7 @@
 
 
 ; this finds things inside #||#  - bug or feature?
-(defun list-definitions (w &aux 
-                           (b (fred-buffer w)) alist item)
-  "Returns a list of all calls to DEF starting in column 0 with their starting
-   positions. Each element of the list is a cons of 2 elements:
-    the string of the name being defined and the starting position in the
-    buffer of the open paren of the call.
-   DEF is case insensitive."
-  ;must special case def at pos 0
-  (when (buffer-substring-p b "(def" 0)
-    (if (setq item (top-form-position-item b 4))
-      (setq alist (list item))))
-  (do ((result-pos (buffer-forward-search b %def-string 0) ;will not hit if there's
-                                                           ;a def starting at pos 0
-                   (buffer-forward-search b %def-string result-pos)))
-      ((not result-pos) (nreverse alist))
-    (setq item (top-form-position-item b result-pos))
-    (when item      
-      (setq alist (cons item alist)))))
+(defun list-definitions (w &aux (b (fred-buffer w)) alist)  "Returns a list of all calls to DEF starting in column 0 with their starting   positions. Each element of the list is a cons of 2 elements:    the string of the name being defined and the starting position in the    buffer of the open paren of the call.   DEF is case insensitive."  (do ((pos 0 (buffer-line-start b pos 1)))       ((buffer-end-p b pos) (nreverse alist))      (when (buffer-substring-p b "(def" pos)        (let ((item (top-form-position-item b (+ pos 4))))          (when item                  (push item alist))))))
 
 (defun top-form-position-item (w start-pos &aux 
                                  after-def-pos result-pos end-pos string methodp)
