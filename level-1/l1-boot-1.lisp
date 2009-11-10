@@ -204,7 +204,7 @@
               )))
 
 (defun lisp-implementation-version ()
-  "Version 5.2")
+  "Version 5.2.1")
 
 
 
