@@ -7,7 +7,7 @@
 
 ;;
 ;; Modification History
-;;
+;;;; 11/10/09 terje *mcl-revision*
 ;; 04/08/97 bill  Remove *standard-kernel-method-class*, it's in l1-clos now.
 ;;                Change 68K version of make-all-methods-kernel
 ;;                to set the $lfattr-kernel-bit of the method's function instead
@@ -20,7 +20,7 @@
 ;; 04/12/96 bill  New file
 ;;
 
-(in-package :ccl)
+(in-package :ccl)(defvar *mcl-revision* (with-open-file (in "ccl:.hg;branchheads.cache" :if-does-not-exist nil)                               (when in                                 (subseq (read-line in) 0 10))))
 
 ; enable redefine-kernel-function's error checking
 (setq *warn-if-redefine-kernel* t)
