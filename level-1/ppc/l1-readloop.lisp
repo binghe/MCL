@@ -52,7 +52,7 @@
 ; Copyright 1995-1999 Digitool, Inc.
 
 ;; Modification History
-;
+;; 11/10/09 terje  new application-version-string method; ------------ 5.2.1
 ; process-to-abort - don't do *no-scheduling* - use without-event-processing instead
 ; ------------ 5.0 final
 ; 06/13/00 akh another fix in macroexpand-1
@@ -804,8 +804,7 @@
 (defmethod application-name          ((app application)) nil)
 (defmethod application-resource-file ((app application)) nil)
 (defmethod application-sizes         ((app application)) nil)
-(defmethod application-init-file     ((app application)) nil)
-
+(defmethod application-init-file     ((app application)) nil)(defmethod application-version-string ((app application)) NIL)
 
 (defmethod application-about-view ((app application))
   (make-dialog-item 'static-text-dialog-item

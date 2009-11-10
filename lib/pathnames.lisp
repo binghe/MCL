@@ -2447,8 +2447,8 @@
 
 
 (defun new-version-resource ()
-  (Let* ((newv *new-lisp-patch-version*)(oldv (lisp-patch-version-number)))
-    (when (and newv (neq newv oldv))
+  (let ((version-string (application-version-string *application*)))
+    (when version-string
       (let ((resh (%null-ptr))
             (curfile (#_CurResFile))
             oldsize)
@@ -2461,11 +2461,11 @@
               (setq oldsize (#_GetHandleSize resh))              
               (with-dereferenced-handles ((r resh))
                 (let* ((len1 (%get-byte r 6))
-                       (str1 (%str-cat (lisp-implementation-version-less-patch) "p" (format nil "~A" newv)))
+                       (str1 version-string)
                        (str2 (%get-string r (+ 7 len1)))
-                       (delta (- (length str1)(length (lisp-implementation-short-version)))))
+                       (delta (- (length str1) len1)))
                   (setq str2 (%str-cat str1 (%substr str2 len1 (length str2))))
-                  (let ((newres (errchk (#_NewHandle (+ oldsize delta delta)))))
+                  (let ((newres (#_NewHandle :errchk (+ oldsize delta delta))))
                     (with-dereferenced-handles ((p newres))
                       (dotimes (i 3)
                         (declare (fixnum i))
