@@ -1,1 +1,0 @@
-;; Fix to Issue #2;; http://code.google.com/p/mcl/issues/detail?id=2;;;; l1-files.lisp(in-package :ccl)(defun directory-pathname-p (path)  (let ((name (pathname-name path))(type (pathname-type path)))    (and (or (null name) (eq name :unspecific) (%izerop (length name)))              (or (null type) (eq type :unspecific)))))

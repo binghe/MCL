@@ -2872,12 +2872,7 @@ NIL
       path 
       (cons-pathname dir nam typ host version))))
 
-(defun directory-pathname-p (path)
-  (let ((name (pathname-name path))(type (pathname-type path)))
-    (and  (or (null name) (%izerop (length name)))
-          (or (null type) (eq type :unspecific)))))
-
-
+(defun directory-pathname-p (path)  (let ((name (pathname-name path))(type (pathname-type path)))    (and (or (null name) (eq name :unspecific) (%izerop (length name)))              (or (null type) (eq type :unspecific)))))
 (defun pathname-version (path)
   (when (streamp path) (setq path (%path-from-stream path)))
   (typecase path
