@@ -518,18 +518,16 @@
        "SHIP:WOOD;**;"))
     
     (ship-file "ship:gather-distribution.lisp")        ; adds the running lisp:    (get-the-files2 "SHIP:;;"                    `(,(get-app-pathname)))    
-    (get-the-files2 "SHIP:"                    '(#P"ccl:pmcl-kernel"                      #P"ccl:pmcl-OSX-kernel"))        (get-the-files2 (concatenate 'string "SHIP:" patch-directory-prefix (lisp-implementation-version-less-patch) ";")                    (directory #P"ccl:Patches;**;*.lisp"))        ))#|
+    (get-the-files2 "SHIP:"                    '(#P"ccl:pmcl-kernel"                      #P"ccl:pmcl-OSX-kernel"))        (get-the-files2 (concatenate 'string "SHIP:" patch-directory-prefix (lisp-implementation-version-less-patch) ";")                    (directory #P"ccl:Patches;**;*.lisp"))        ))#|For a new version/distribution:* Update the version code in #'lisp-implementation-version in #p"home:Level-1;l1-boot-1.lisp"* Add a feature matching the new version to *features* in #p"home:Level-0;l0-init.lisp"
 
-Remember: 
+Older notes (still relevant?): 
 
 Then do ship-files on dest files to remove ckid resources etc. ("CCL:lib;ship-files") we forgot
 we forgot release notes
-add version to *features*
 (make-all-methods-kernel)  "ccl:lib;prepare-mcl-environment.lisp"
 (setq *recent-files* nil) before save-application - should save-application do that?  - it does
 package
 (setq ccl::*last-choose-file-directory* nil)
-vers resource - screw it - we just modify the function lisp-implementation-version
 shared bit - if only i remembered where that is
 2 kernels
 

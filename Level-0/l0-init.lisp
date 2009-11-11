@@ -70,7 +70,7 @@
     #+ppc-target :ccl-4.3.5
     #+ppc-target :ccl-5.0
     #+ppc-target :ccl-5.1
-    #+ppc-target :ccl-5.2
+    #+ppc-target :ccl-5.2    #+ppc-target :ccl-5.2.1
     #+ppc-target :powerpc
     #+ppc-target :ppc-target
     #+ppc-target :ppc-clos              ; used in encapsulate
