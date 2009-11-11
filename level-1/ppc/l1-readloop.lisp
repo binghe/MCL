@@ -863,8 +863,7 @@
                           (toplevel-loop)))
       (toplevel))
     (progn (make-mcl-listener-process)
-           )))
-
+           )))(defmethod application-version-string ((a lisp-development-system))  (concatenate 'string   (lisp-implementation-version-less-patch)   (when *new-lisp-patch-version*     (format nil "p~A" *new-lisp-patch-version*))))
 (defmethod application-file-creator ((app lisp-development-system))
   *ccl-file-creator*)
 
