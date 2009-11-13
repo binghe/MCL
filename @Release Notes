@@ -1,3 +1,5 @@
+RELEASE NOTES
+
 ;;;   MCL is licensed under the terms of the Lisp Lesser GNU Public
 ;;;   License , known as the LLGPL and distributed with MCL as the
 ;;;   file "LICENSE".  The LLGPL consists of a preamble and the LGPL,
@@ -9,10 +11,27 @@
 ;;;   The LLGPL is also available online at
 ;;;   http://opensource.franz.com/preamble.html
 
-RMCL 5.2 RELEASE NOTES
+RMCL 5.2 requires OSX 10.3 or later. It runs on both Intel and PPC processors.
 
+===============
+RMCL 5.2.1
+===============
 
-RMCL 5.2 requires OSX 10.3 or later. It runs on both Intel and PPC processors. 
+Recompiled pmcl-OSX-kernel since 5.2 release to fix an issue with using floats after calling choose-file-dialog.
+
+Stores version code in the resource (shown in the Finder's Get Info dialog).
+New application-version-string method to provide the short version of an application.
+New *mcl-revision* holds revision code from the repository
+
+List Definitions (on the Tools menu) works for more documents no matter their end-of-line encoding.
+
+The save-application function accepts a single fixnum as :size argument.
+
+Calling directory-pathname-p doesn't fail for pathnames with an :unspecific name or type.
+
+===============
+RMCL 5.2
+===============
 
 Unicode Support
 ---------------
@@ -797,7 +816,7 @@ Function terminator-predicate handles eol.
 Minor improvements and modifications
 --------------
 
-New varioble *use-app-resources* used by save-application. Initial value is T.
+New variable *use-app-resources* used by save-application. Initial value is T.
 
 Lose need for subprims shared library.
 
