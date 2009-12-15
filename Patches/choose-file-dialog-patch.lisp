@@ -1,4 +1,6 @@
-;;-*- mode: lisp; package: ccl -*-;; Makes choose-file-dialog recognize most text files when :mac-file-type keyword is :TEXT;; and recognize packages in general as if they were files.;; Patch for (R)MCL 5.2 - issue #10 at mcl.googlecode.com;; October 2009. Terje Norderhaug <terje@in-progress.com> ;; License: LLGPL.(in-package :ccl)(eval-when (:load-toplevel :compile-toplevel :execute)  (deftrap-inline "_NavDialogSetFilterTypeIdentifiers"  ; not defined in (R)MCL 5.2    ((inGetFileDialog :NavDialogRef)     (inTypeIdentifiers :CFArrayRef)) ;AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER    :OSStatus    () ))(let ((*WARN-IF-REDEFINE-KERNEL* nil)      (*warn-if-redefine* nil))(defun set-default-dialog-creation-options (options &key location windowTitle
+;;-*- mode: lisp; package: ccl -*-;; Makes choose-file-dialog recognize most text files when :mac-file-type keyword is :TEXT;; and recognize packages in general as if they were files.;; Patch for (R)MCL 5.2 - issue #10 at mcl.googlecode.com;; October 2009. Terje Norderhaug <terje@in-progress.com> ;; License: LLGPL.(in-package :ccl)(eval-when (:load-toplevel :compile-toplevel :execute)  (deftrap-inline "_NavDialogSetFilterTypeIdentifiers"  ; not defined in (R)MCL 5.2    ((inGetFileDialog :NavDialogRef)     (inTypeIdentifiers :CFArrayRef)) ;AVAILABLE_MAC_OS_X_VERSION_10_4_AND_LATER    :OSStatus    () ))#+ignore ;; new(defpascal nav-create-get-file-proc (:upp-creator "NewNavEventUPP"                                                  :NavEventCallbackMessage callbackselector                                                   :NavCBRecPtr callbackparms                                                   :NavCallBackUserData callbackud)   ; variant of event-wdef  (declare (ignore callbackud))
+  (case callbackselector 
+    (#.#$kNavCBStart     (when *see-untyped-osx-files* ; show-all-files       (let ((context (pref callbackparms :NavCBRec.context)))          #+ignore         (rlet ((&kall :NavPopupMenuItem))           (setf (pref &kall :NavPopupMenuItem) #$kNavAllFiles)           (#_navcustomcontrol context #$kNavCtlSelectAllType &kall))         (rlet ((nav-menu-item :NavMenuItemSpec                               :version #$kNavMenuItemSpecVersion                               :menucreator 0                               :menutype 0 ; the index (yes, really, see header documentation on kNavCBPopupMenuSelect)                               :menuitemname ""))           (check-nav-result (#_navcustomcontrol context #$kNavCtlSelectCustomType nav-menu-item))))))))(let ((*WARN-IF-REDEFINE-KERNEL* nil)      (*warn-if-redefine* nil))(defun set-default-dialog-creation-options (options &key location windowTitle
                                            actionButtonLabel cancelButtonLabel
                                            savedFileName message (NavNoTypePopup t)
                                            allowMultipleFiles cfarray
@@ -62,7 +64,7 @@
             (setq directory (choose-file-default-directory)))
     (set-choose-file-default-directory-2 directory)
     )
-  ;; something like this to allow looking at OSX .h and .make files
+  ;; something like this to allow looking at OSX .h and .make files  #+ignore
   (when *see-untyped-osx-files* 
     (cond ((and (not (listp mac-file-type))) ;(equalp mac-file-type "TEXT")) ;; i.e just looking for text files 
            (setq mac-file-type (list #.(ff-long-to-ostype 0) "????" :|utxt| mac-file-type)))  ;; aka (ff-long-to-ostype 0)
@@ -83,7 +85,7 @@
             (setq tphandle (#_newhandle :errchk size))
             (when (%null-ptr-p tphandle)(error "Not enough room for handle size ~s" size))
             (with-dereferenced-handles ((tp tphandle))
-              (%put-ostype tp (or mac-file-creator (application-file-creator *application*)) 0) ;; ?? - use dialog options to ignore this - seems to be ignored
+              (%put-ostype tp (or mac-file-creator #+ignore (application-file-creator *application*) #$kNavGenericSignature) 0) ;; ?? - use dialog options to ignore this - seems to be ignored
               (%put-word tp ntypes 6) 
               (setq offset 8)
               (if (listp mac-file-type)
@@ -100,7 +102,7 @@
                  ;:savedfilename name 
                  :allowmultiplefiles allow-multiple-files
                  :message prompt 
-                 ;:NavNoTypePopup (not format-query-p)
+                 :NavNoTypePopup (not *see-untyped-osx-files*)
                  )                  
                 (let ()
                   (prog () ;hiding-windoids ;; my goodness aren't we old fashioned
@@ -117,7 +119,7 @@
                         (when (and (eq foo :try-again)(null retried))
                           (setq retried t)
                           (go again)))
-                      (WHEN (neq result #$noerr) (throw-cancel :cancel))                      (when (typecase mac-file-type                              ((eql :text) T)                               (string (string= mac-file-type :text))                              (cons (member :text mac-file-type :test #'string=)))                        ; compensate for ostype :text improperly considered equivalent to the UTI "com.apple.traditional-mac-plain-text"                        (#_NavDialogSetFilterTypeIdentifiers                         (%get-ptr the-dialog)                         (create-cfarray '("public.text"))))
+                      (WHEN (neq result #$noerr) (throw-cancel :cancel))                      #+ignore                      (when (typecase mac-file-type                              ((eql :text) T)                               (string (string= mac-file-type :text))                              (cons (member :text mac-file-type :test #'string=)))                        ; compensate for ostype :text improperly considered equivalent to the UTI "com.apple.traditional-mac-plain-text"                        (#_NavDialogSetFilterTypeIdentifiers                         (%get-ptr the-dialog)                         (create-cfarray '("public.text"))))                      (let (utis)                        (with-cfstrs ((kUTTagClassOSType "com.apple.ostype"))                          (dolist (type (if (listp mac-file-type) mac-file-type (list mac-file-type)))                            (case type                              (:text ; avoids using uti "com.apple.traditional-mac-plain-text" for text                               (push "public.plain-text" utis))                              (:lisp                               (push "org.lisp.lisp-source" utis))                              (otherwise                               (let* ((cf-ostype (#_UTCreateStringForOSType type))                                      (cf-uti (#_UTTypeCreatePreferredIdentifierForTag kUTTagClassOSType cf-ostype (%null-ptr))))                                 (push (%get-cfstring cf-uti) utis) ; does cfrelease!                                 (#_cfrelease cf-ostype)))))                          (#_NavDialogSetFilterTypeIdentifiers                           (%get-ptr the-dialog)                           (create-cfarray (nreverse utis)))))
                       (when directory
                         (#_navcustomcontrol (%get-ptr the-dialog) #$kNavCtlSetLocation aedesc))                        
                       (with-foreign-window
