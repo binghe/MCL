@@ -102,7 +102,7 @@
                  ;:savedfilename name 
                  :allowmultiplefiles allow-multiple-files
                  :message prompt 
-                 :NavNoTypePopup (not *see-untyped-osx-files*)
+                 :NavNoTypePopup (or (not mac-file-type) (not *see-untyped-osx-files*))
                  )                 (when (and *see-untyped-osx-files* mac-file-type)                  (rset options :navDialogCreationOptions.OptionFlags
                         (logior (rref options :navDialogCreationOptions.OptionFlags)
                                 #$kNavAllFilesInPopup)))                 
