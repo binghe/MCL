@@ -215,16 +215,16 @@
                                              (maybe-start-isearch (ed (get-pathname (car list))) string)))
                                        :column-descriptors (vector
                                                             (list                                                              (lambda (item comparing-p browser rowID)
-                                                               (declare (ignore browser rowID))
-                                                               (if comparing-p ; compare based only on filename portion
-                                                                 (file-namestring (get-pathname item))
-                                                                 (get-pathname item)))
-                                                             :title "Filename" :maxwidth 1800 :justification :left :more-function-parameters t)
-                                                            '(hits :title "Hits" :minwidth 70)
+                                                               (declare (ignore browser rowID comparing-p))
+                                                               (file-namestring (get-pathname item)))
+                                                             :title "Filename" :minwidth 100 :justification :left :more-function-parameters t)                                                            (list                                                             (lambda (item comparing-p browser rowID)
+                                                               (declare (ignore browser rowID comparing-p))
+                                                               (posix-namestring (get-pathname item)))
+                                                             :title "Path" :maxwidth 1800 :justification :left :more-function-parameters t)
+                                                            '(hits :title "Hits" :minwidth 70 :maxwidth 120 :justification :right)
                                                             '(mod-date :title "Last Modified" :property-type :time :minwidth 100)
                                                             )
                                        ))
-
 (defun db-searching-files-dialog-with-iterator (string pathname text-only-p search-comments-p)
   (let* ((dialog (db-searching-files-selection-dialog string))
          (db (view-named 'sequence-dialog-item dialog))
