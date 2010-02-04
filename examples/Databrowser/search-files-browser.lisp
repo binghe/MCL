@@ -217,11 +217,11 @@
                                                             (list                                                              (lambda (item comparing-p browser rowID)
                                                                (declare (ignore browser rowID comparing-p))
                                                                (file-namestring (get-pathname item)))
-                                                             :title "Filename" :minwidth 100 :justification :left :more-function-parameters t)                                                            (list                                                             (lambda (item comparing-p browser rowID)
+                                                             :title "Filename" :minwidth 120 :justification :left :more-function-parameters t)                                                            (list                                                             (lambda (item comparing-p browser rowID)
                                                                (declare (ignore browser rowID comparing-p))
-                                                               (posix-namestring (get-pathname item)))
-                                                             :title "Path" :maxwidth 1800 :justification :left :more-function-parameters t)
-                                                            '(hits :title "Hits" :minwidth 70 :maxwidth 120 :justification :right)
+                                                               (posix-dir-string (pathname-directory (get-pathname item))))
+                                                             :title "Path" :minwidth 120 :maxwidth 1800 :justification :left :more-function-parameters t)
+                                                            '(hits :title "Hits" :minwidth 70 :maxwidth 120)
                                                             '(mod-date :title "Last Modified" :property-type :time :minwidth 100)
                                                             )
                                        ))
