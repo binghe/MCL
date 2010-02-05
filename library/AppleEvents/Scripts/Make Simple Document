@@ -1,0 +1,1 @@
+tell application "MCL 4.2"	make new document	set contents of window 1 to "Hello Script!!"	delete the last character of word 2	contents of window 1end tell

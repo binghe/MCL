@@ -16,4 +16,5 @@ splitfile pmcl/siow_resources
 splitfile examples/contextual-menu-cursor.rsrc
 splitfile library/cursors.rsrc
 splitfile "library/MCL Background.rsrc"
+splitfile "library/AppleEvents/aete-for-mcl.rsrc"
 

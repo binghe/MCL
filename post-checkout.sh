@@ -21,6 +21,7 @@ joinfile pmcl/siow_resources "RSRC" "RSED"
 joinfile examples/contextual-menu-cursor.rsrc "RSRC" "RSED"
 joinfile library/"MCL Background.rsrc" "RSRC" "RSED"
 joinfile library/cursors.rsrc "RSRC" "RSED"
+joinfile library/AppleEvents/aete-for-mcl.rsrc "RSRC" "RSED"
 
 
 
