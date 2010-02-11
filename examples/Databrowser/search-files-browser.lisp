@@ -21,11 +21,11 @@
 
 ;;; You can re-sort the items by clicking the column headers, change the width of the columns
 ;;;   by dragging them, and even drag entire columns around. Note what happens if you
-;;;   widen the 'Last Modifed' column--it shows more information.
+;;;   widen the 'Last Modified' column--it shows more information.
 
 ;;; I think it's safe to assume Boyer-Moore.lisp is loaded now, so we don't check for it herein.
 
-;;; HISTORY;;; 2010-feb-03 Terje  Auto resize the databrowser to match the window size. ;;; 2010-feb-03 Terje  Provide a minimum row height for the databrowser. 
+;;; HISTORY;;; 2010-feb-11 Terje  Increased window width of the search window to accomodate the databrowser.;;;                    Truncate the text of the displayed search path in the middle instead of at the end. ;;; 2010-feb-03 Terje  Auto resize the databrowser to match the window size. ;;; 2010-feb-03 Terje  Provide a minimum row height for the databrowser. 
 ;;; July 1, 2004 SVS use the directory function as an iterator (generator) such that
 ;;;         we can begin searching immediately, without waiting for the entire list of files
 ;;;         to be generated, and we won't have to contain a potentially huge list of files in memory either.
@@ -83,7 +83,7 @@
                                                 button-width (- spacing-a border) spacing-a)     ; button left
                                              text-height)
                       :view-font '("Geneva" 9 :italic)
-                      :view-nick-name 'detailed-state
+                      :view-nick-name 'detailed-state                      :text-truncation :middle
                       :compress-text nil)       ; avoid bug where compressing switches to non-italics
                     (make-instance 'button-dialog-item
                       :dialog-item-text stop-button-text
@@ -175,7 +175,7 @@
                   :window-size-variable window-size-variable
                   :window-title window-title
                   :view-size (or (and window-size-variable (symbol-value window-size-variable))
-                                 #@(400 180))
+                                 #@(600 180))
                   :view-position  (or (and window-position-variable (symbol-value window-position-variable))
                                       (make-point (%ilsr 1 (- *screen-width* 400))
                                                   90))
