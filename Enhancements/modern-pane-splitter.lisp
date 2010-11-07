@@ -21,7 +21,11 @@
          (*gray-color* #xA0A0A0))
     (flet ((set-pen (brush &optional inactive-brush)
              (#_setThemePen (if (draw-active-p item) brush (or inactive-brush  brush))
-              (view-pixel-depth item) (view-color-p item)))) 
+              (view-pixel-depth item) (view-color-p item)))           (offset-rect (rect h &optional v)
+             (#_OffsetRect :ptr rect :long (make-point h v))
+             rect)           (inset-rect (rect h &optional v)
+             (#_InsetRect :ptr rect :long (make-point h v))
+             rect)           (paint-rect (rect)             (#_paintrect rect)))
       (with-item-rect (r item)
         (ecase direction
           (:horizontal
@@ -32,7 +36,7 @@
          (compact-p
           (with-fore-color (if active-p *dark-gray-color* *gray-color*)
             (set-pen #$kThemeBrushBevelActiveDark #$kThemeBrushBevelInactiveDark) ;; #$kThemeBrushFocusHighlight ; <- nice!
-            (#_paintrect r)))
+            (paint-rect r)))
          (T
           (#_DrawThemePlacard r (appearance-theme-state item))
           (inset-rect r 1 1)
@@ -40,7 +44,7 @@
           (with-fore-color *dark-gray-color*
             (set-pen #$kThemeBrushBevelActiveDark #$kThemeBrushBevelInactiveDark) 
             (inset-rect r margin margin)
-            (#_paintrect r))
+            (paint-rect r))
           (with-fore-color *gray-color*
             (set-pen #$kThemeBrushDocumentWindowBackground) 
             (inset-rect r 1 1)
@@ -49,16 +53,16 @@
                (incf (pref r :rect.top))
                (setf (pref r :rect.right)
                      (+ (pref r :rect.left) 3))
-               (#_paintrect r)
+               (paint-rect r)
                (offset-rect r 4 0)
-               (#_paintrect r))
+               (paint-rect r))
               (:vertical        
                (incf (pref r :rect.top))
                (setf (pref r :rect.bottom)
                      (+ (pref r :rect.top) 2))
-               (#_paintrect r)
+               (paint-rect r)
                (offset-rect r 0 3)
-               (#_paintrect r))))))))))
+               (paint-rect r))))))))))
 
 (defparameter *pane-splitter-length* 14)
 
