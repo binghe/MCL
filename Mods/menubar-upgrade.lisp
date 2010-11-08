@@ -60,28 +60,7 @@
  :class 'ed-menu-item
  :command-key '(:no-command :control #\I)) ;; originally c-x-c-i
 
-;; Note that a patch for menukey-modifiers-p is required for C-I not to be mixed with with C-tab:
-
-(let ((*warn-if-redefine-kernel* NIL))
-(defun menukey-modifiers-p (mods)
-  (declare (resident))
-  (unless (and (%ilogbitp #$controlkeyBit mods)
-           (let ((keystroke (event-keystroke (pref *current-event* :eventrecord.message) mods)))
-            (eql keystroke #.(keystroke-code '(:control #\Tab)))))
-    (if (null *control-key-mapping*)
-      (or (%ilogbitp #$cmdkeyBit mods)
-          (and (%ilogbitp #$controlkeyBit mods)
-               ; disable control for menukey shortcuts after shadowing comtabs like control-x:
-               (not (fred-shadowing-comtab 
-                     (current-key-handler 
-                      (front-window)))))) 
-      (when (%ilogbitp #$cmdkeyBit mods)
-        (case *control-key-mapping*
-          (:command-shift (not (%ilogbitp #$shiftkeyBit mods)))
-          (:command (%ilogbitp #$shiftkeyBit mods))
-          (t t))))))
-
-) ; end redefine
+;; Note that the patch for menukey-modifiers-p is required for C-I not to be mixed with with C-tab.
 
 (assert (not (comtab-get %initial-comtab% '(:control #\i))))
 

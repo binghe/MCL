@@ -12,7 +12,7 @@
 
 (let ((*warn-if-redefine* nil)
       (*warn-if-redefine-kernel* NIL))
-
+#+ignore
 (defun menukey-modifiers-p (mods)
   (declare (resident))
   (if (null *control-key-mapping*)
@@ -22,7 +22,24 @@
       (case *control-key-mapping*
         (:command-shift (not (%ilogbitp #$shiftkeyBit mods)))
         (:command (%ilogbitp #$shiftkeyBit mods))
-        (t t)))))
+        (t t)))))(defun menukey-modifiers-p (mods)
+  (declare (resident))
+  (unless (and (%ilogbitp #$controlkeyBit mods)
+           (let ((keystroke (event-keystroke (pref *current-event* :eventrecord.message) mods)))
+            (eql keystroke #.(keystroke-code '(:control #\Tab)))))
+    (if (null *control-key-mapping*)
+      (or (%ilogbitp #$cmdkeyBit mods)
+          (and (%ilogbitp #$controlkeyBit mods)
+               ; disable control for menukey shortcuts after shadowing comtabs like control-x:
+               (not (fred-shadowing-comtab 
+                     (current-key-handler 
+                      (front-window)))))) 
+      (when (%ilogbitp #$cmdkeyBit mods)
+        (case *control-key-mapping*
+          (:command-shift (not (%ilogbitp #$shiftkeyBit mods)))
+          (:command (%ilogbitp #$shiftkeyBit mods))
+          (t t))))))
+
 
 ) ; end redefine
 
