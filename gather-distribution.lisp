@@ -484,7 +484,7 @@
  *pmcl-files*))
 
 (setf (logical-pathname-translations "SHIP")
-      `(("**;*.*.*" ,(format nil  "ccl:RMCL ~A;**;*.*.*" (lisp-implementation-short-version)))))(require :ship-files)(defun gather-distribution ()    (get-the-files2 "SHIP:" '(#P"ccl:@Release Notes.txt"))  
+      `(("**;*.*.*" ,(format nil  "ccl:MCL ~A;**;*.*.*" (lisp-implementation-short-version)))))(require :ship-files)(defun gather-distribution ()    (get-the-files2 "SHIP:" '(#P"ccl:@Release Notes.txt"))  
   (get-the-files2 "SHIP:" *files-to-ship*)
   (dolist (f (directory "ship:**;CVS;*"))
     (delete-file f))
@@ -505,7 +505,7 @@
      "SHIP:WOOD;**;"))
   
   (ship-file "ship:gather-distribution.lisp")    ; adds the running lisp:  (get-the-files2 "SHIP:;;"                  `(,(get-app-pathname)))  
-  (get-the-files2 "SHIP:"                  '(#P"ccl:pmcl-kernel"                    #P"ccl:pmcl-OSX-kernel"))    (get-the-files2 (concatenate 'string "SHIP:" patch-directory-prefix (lisp-implementation-version-less-patch) ";")                  (directory #P"ccl:Patches;**;*.lisp"))    )#|For a new version/distribution:* Update the version code in #'lisp-implementation-version in #p"home:Level-1;l1-boot-1.lisp"* Add a feature matching the new version to *features* in #p"home:Level-0;l0-init.lisp"
+  (get-the-files2 "SHIP:"                  '(#P"ccl:pmcl-kernel"                    #P"ccl:pmcl-OSX-kernel"))  (get-the-files2 "SHIP:"                  '(#P"ccl:Mods;*.lisp"))    (get-the-files2 (concatenate 'string "SHIP:" patch-directory-prefix (lisp-implementation-version-less-patch) ";")                  (directory #P"ccl:Patches;**;*.lisp"))    )#|For a new version/distribution:* Update the version code in #'lisp-implementation-version in #p"home:Level-1;l1-boot-1.lisp"* Add a feature matching the new version to *features* in #p"home:Level-0;l0-init.lisp"
 
 Older notes (still relevant?): 
 
