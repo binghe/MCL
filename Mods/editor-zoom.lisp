@@ -1,4 +1,4 @@
-;;;-*- Mode: Lisp; Package: CCL -*-;;;;;; Command-+ to zoom in the editor, a must for aging lispers...;;; March 2010, Terje Norderhaug <terje@in-progress.com>;;; License: LLGPL.
+;;;-*- Mode: Lisp; Package: CCL -*-;;;;;; Command-+ to zoom in the editor, a must for aging lispers...;;; November 2010, Terje Norderhaug <terje@in-progress.com>;;; License: LLGPL.
 (in-package :ccl)
 
 (defun update-after-zoom (w)
@@ -40,17 +40,14 @@
 (defmethod (setf zoom-level) (v (w window))
   (setf (view-get w 'zoom-level) v))
 
-;; should really be in a View menu....
-(add-new-item *edit-menu* "Zoom In" #'window-zoom-in
-   :command-key #\+
-  :class 'window-menu-item)
 
 (comtab-set-key %initial-comtab% '(:command #\=) 
-                (lambda (fred-item)(window-zoom-in (view-window fred-item)))) 
-
-(add-new-item *edit-menu* "Zoom Out" #'window-zoom-out
-  :command-key #\-
-  :class 'window-menu-item)
+                (lambda (fred-item)(window-zoom-in (view-window fred-item))));; should really be in a View menu....(let ((wrap-item (find-menu-item *edit-menu* "Word Wrap")))  (remove-menu-items *edit-menu* wrap-item)  (add-new-item *edit-menu* "Zoom In" #'window-zoom-in
+                :command-key #\+
+                :class 'window-menu-item) 
+  (add-new-item *edit-menu* "Zoom Out" #'window-zoom-out
+                :command-key #\-
+                :class 'window-menu-item)  (add-menu-items *edit-menu* wrap-item))
 
 ; see %redraw-screen-lines
 
