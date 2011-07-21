@@ -318,6 +318,11 @@
                         name)))
   (brw:databrowser-add-items browser (brw:databrowser-item-children browser (directory-path browser))))
 
+(defmethod databrowser::finish-initializing ((browser file-browser))
+  ; browser misbehaves when opening/closing subfolders without this!
+  (call-next-method)
+  (brw::set-sort-column browser (brw::first-column-id browser)))
+
 ; This isn't exactly the same as how the Finder does it. In standard-file dialogs, for instance,
 ;   selection moves to the item nearest to the key you press, even if there is no exact match.
 ;   Here, we don't move at all unless there's an exact match.
