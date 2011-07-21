@@ -612,25 +612,10 @@ Evaluate this to see how the databrowser is misplaced:
     ))
 
 (defmethod databrowser-compare ((browser databrowser) id1 id2 sortProperty)
-  "Customize this if needed, but this method will usually suffice."
+  "True if the value of the data referenced by id1 is less than the value of the data referenced by id2"
   (when (> sortProperty 1023) ; because the rest are reserved by Apple
-    (let ((item1 (lookup-browser-data browser id1 sortProperty t))
-          (item2 (lookup-browser-data browser id2 sortProperty t)))
-      (labels ((compareit (item1 item2)
-                 (cond ((and (stringp item1)
-                             (stringp item2))
-                        (string-lessp item1 item2))
-                       ((and (numberp item1)
-                             (numberp item2))
-                        (< item1 item2))
-                       ((null item1) t) ; consider nil less than true
-                       ((null item2) nil)
-                       (t ; as a last resort, compare the stringified versions of the data
-                        (let ((sitem1 (stringify-browser-data item1))
-                              (sitem2 (stringify-browser-data item2)))
-                          (compareit sitem1 sitem2))))))
-        (compareit item1 item2)))))
-
+    (let ((column (get-databrowser-column browser sortProperty)))
+      (column-compare column id1 id2))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1263,6 +1248,29 @@ Evaluate this to see how the databrowser is misplaced:
      #$kDataBrowserItemNoProperty
      (property-id column))))
 
+(defmethod column-compare ((column column) id1 id2)
+  "Compares the values of two cells in the column"
+  (labels ((compareit (item1 item2)
+             (cond ((and (stringp item1)
+                         (stringp item2))
+                    (string-lessp item1 item2))
+                   ((and (numberp item1)
+                         (numberp item2))
+                    (< item1 item2))
+                   ((null item1) t) ; consider nil less than true
+                   ((null item2) nil)
+                   (t ; as a last resort, compare the stringified versions of the data
+                    (let ((sitem1 (stringify-browser-data item1))
+                          (sitem2 (stringify-browser-data item2)))
+                      (compareit sitem1 sitem2))))))
+
+    (multiple-value-bind (value1 value2)
+                         (let ((*comparing-p* T))
+                           (values 
+                            (column-item-value column id1)
+                            (column-item-value column id2)))
+      (compareit value1 value2))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TEXT COLUMN
 
@@ -1445,6 +1453,11 @@ Evaluate this to see how the databrowser is misplaced:
     (%set-item-data-icon cell-buffer icon)
     (with-slots (browser) column
       (%set-item-data-text browser cell-buffer text))))
+
+(defmethod column-compare ((column icon&text-column) id1 id2)
+  (let ((value1 (nth-value 1 (column-item-value column id1)))
+        (value2 (nth-value 1 (column-item-value column id2))))
+    (string-lessp value1 value2)))
 
 ;; TIME COLUMN
 
@@ -1794,13 +1807,16 @@ Evaluate this to see how the databrowser is misplaced:
   ;(print "#$kDataBrowserItemSelfIdentityProperty !")
   nil)
 
-(defmethod lookup-browser-data ((browser collection-databrowser) rowID columnID &optional (comparing-p nil))
+(defparameter *comparing-p* NIL)
+
+(defmethod lookup-browser-data ((browser collection-databrowser) rowID columnID &optional (comparing-p *comparing-p*))
   (let ((rowitem (databrowser-row-object browser rowID))
         (column (get-databrowser-column browser columnID)))
     (ignore-errors
      (if (more-function-parameters column)
        (funcall (column-function column) rowitem comparing-p browser rowID)
        (funcall (column-function column) rowitem)))))
+
 
 ; Specialize only if you invent a new kind of browser
 (defmethod (setf lookup-browser-data) (data (browser collection-databrowser) rowID columnID)
