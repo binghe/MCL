@@ -1345,11 +1345,61 @@ Evaluate this to see how the databrowser is misplaced:
 ;; POPUP COLUMN
 
 (defclass popup-column (column)
-  ()
+  ((key :type function :initarg :key :initform #'identity)
+   (test :type function :initarg :test :initform #'equal)
+   (options :type (or list function) :initarg :options :initform nil))
   (:default-initargs
     :property-type :POPUP))
 
 ;      (:POPUP #$kDataBrowserpopupMenuType) ; this could be changed by the user
+
+(defmethod update-column-row-value ((column popup-column) rowID cell-buffer)
+  (multiple-value-bind (selection)
+                       (column-item-value column rowID)
+    (with-slots (options key test menu) column
+      (let* ((items (etypecase options
+                      (list options)
+                      (function
+                       (with-slots (browser) column
+                         (funcall options (databrowser-row-object browser rowID))))))
+             (pos (or (when selection
+                        (or (position selection items :test test)
+                            (position selection items :key key :test test)))
+                      0))
+             (menu (make-instance 'pop-up-menu 
+                     :menu-items 
+                     (mapcar 
+                      (lambda (item)
+                        (typecase item
+                          (menu-item item)
+                          (otherwise
+                           (make-instance 'menu-item
+                             :menu-item-title (funcall key item)))))
+                      items))))
+       (when items
+         (unless (menu-installed-p menu)
+           (menu-install menu))
+         (with-slots (ccl::menu-handle) menu
+           (when ccl::menu-handle
+             (#_SetDataBrowserItemDataMenuRef cell-buffer ccl::menu-handle) 
+             (#_SetDataBrowserItemDataValue cell-buffer (1+ pos))
+             (set-pop-up-menu-default-item menu (1+ pos)))))))))
+
+(defmethod update-column-item-value ((column popup-column) rowID buffer)
+  (rlet ((&val :SInt32))
+    (ccl::errchk (#_GetDataBrowserItemDataValue buffer &val))
+    (with-slots (key options) column
+      (let* ((value (pref &val :SInt32))
+             (items (etypecase options
+                      (list options)
+                      (function
+                       (with-slots (browser) column
+                         (funcall options (databrowser-row-object browser rowID))))))
+             (item (nth (1- value) items)))      
+        (setf (column-item-value column rowID)
+              item
+              #+ignore
+              (funcall key item))))))
 
 ;; ICON COLUMN
 
