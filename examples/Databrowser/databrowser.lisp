@@ -850,14 +850,13 @@ Evaluate this to see how the databrowser is misplaced:
   "Redraw given row. Pass t for rowID to redraw all rows."
   (if (eq rowID t)
     (setf rowID nil))
-  (rlet ((items :unsigned-long))
-    (%put-long items (or rowID #$kDataBrowserNoItem))
+  (rlet ((items :DataBrowserItemID (or rowID #$kDataBrowserNoItem)))
     (#_UpdateDataBrowserItems 
      (dialog-item-handle browser)
      #$kDataBrowserNoItem ; container ?? Do I really have to care about this?? Seems like not.
      1 ; just deal with one item (or all of them) at a time for now
      items
-     #$kDataBrowserNoItem ; wimp out on the pre-sort. Make the browser do the work.
+     #$kDataBrowserItemNoProperty ; wimp out on the pre-sort. Make the browser do the work.
      #$kDataBrowserNoItem ; all properties. (Could do just one, but we didn't make an API for that).
      )))
 
