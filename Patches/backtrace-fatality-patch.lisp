@@ -1,10 +1,54 @@
-;;;-*-Mode: LISP; Package: CCL -*-;;;;;; Fixes an MCL flaw that may cause fatal crashes on errors or breaks.;;;;;; Terje Norderhaug <terje@in-progress.com> ;;;;;; This software is made available AS IS, and no warranty is made about the software or its performance. (in-package :ccl)(let ((*warn-if-redefine-kernel* NIL)      (*warn-if-redefine* nil))(defun frame-vsp (frame &optional parent-vsp sg)
-  (declare (ignore parent-vsp sg))  (check-type frame fixnum "Not a valid stack frame")  (%frame-savevsp frame))(defun lookup-registers (parent sg grand-parent srv-out)  (unless (or (and grand-parent (eql (frame-vsp grand-parent) 0))                            (let ((gg-parent (parent-frame grand-parent sg)))                (and gg-parent (eql (frame-vsp gg-parent) 0))))    (multiple-value-bind (lfun pc) (cfp-lfun parent sg nil)      (when lfun        (multiple-value-bind (mask where) (registers-used-by lfun pc)          (when mask            (locally (declare (fixnum mask))              (if (not where)                 (setf (srv.unresolved srv-out) (%ilogior (srv.unresolved srv-out) mask))                (multiple-value-bind (parent-vsp grand-parent-vsp)(vsp-limits parent sg)                  (cond ((eql parent-vsp grand-parent-vsp)  ;; does this ever happen?                         (setf (srv.unresolved srv-out) (%ilogior (srv.unresolved srv-out) mask)))                        (t                          (let ((vsp (- grand-parent-vsp where 1))                               (j *saved-register-count*))                           (declare (fixnum j))                           (dotimes (i j)                             (declare (fixnum i))                             (when (%ilogbitp (decf j) mask)                               (setf (srv.register-n srv-out i) vsp                                     vsp (1- vsp)                                     (srv.unresolved srv-out)                                     (%ilogand (srv.unresolved srv-out) (%ilognot (%ilsl j 1))))))))))))))))))(defun frame-supplied-args (frame lfun pc child sg)
+;;;-*-Mode: LISP; Package: CCL -*-
+;;;
+;;; Fixes an MCL flaw that may cause fatal crashes on errors or breaks.
+;;;
+;;; Terje Norderhaug <terje@in-progress.com> 
+;;;
+;;; This software is made available AS IS, and no warranty is made about the software or its performance. 
+
+(in-package :ccl)
+
+(let ((*warn-if-redefine-kernel* NIL)
+      (*warn-if-redefine* nil))
+
+(defun frame-vsp (frame &optional parent-vsp sg)
+  (declare (ignore parent-vsp sg))
+  (check-type frame fixnum "Not a valid stack frame")
+  (%frame-savevsp frame))
+
+(defun lookup-registers (parent sg grand-parent srv-out)
+  (unless (or (and grand-parent (eql (frame-vsp grand-parent) 0))              
+              (let ((gg-parent (parent-frame grand-parent sg)))
+                (and gg-parent (eql (frame-vsp gg-parent) 0))))
+    (multiple-value-bind (lfun pc) (cfp-lfun parent sg nil)
+      (when lfun
+        (multiple-value-bind (mask where) (registers-used-by lfun pc)
+          (when mask
+            (locally (declare (fixnum mask))
+              (if (not where) 
+                (setf (srv.unresolved srv-out) (%ilogior (srv.unresolved srv-out) mask))
+                (multiple-value-bind (parent-vsp grand-parent-vsp)(vsp-limits parent sg)
+                  (cond ((eql parent-vsp grand-parent-vsp)  ;; does this ever happen?
+                         (setf (srv.unresolved srv-out) (%ilogior (srv.unresolved srv-out) mask)))
+                        (t 
+                         (let ((vsp (- grand-parent-vsp where 1))
+                               (j *saved-register-count*))
+                           (declare (fixnum j))
+                           (dotimes (i j)
+                             (declare (fixnum i))
+                             (when (%ilogbitp (decf j) mask)
+                               (setf (srv.register-n srv-out i) vsp
+                                     vsp (1- vsp)
+                                     (srv.unresolved srv-out)
+                                     (%ilogand (srv.unresolved srv-out) (%ilognot (%ilsl j 1))))))))))))))))))
+
+(defun frame-supplied-args (frame lfun pc child sg)
   (declare (ignore child))
   (multiple-value-bind (req opt restp keys allow-other-keys optinit lexprp ncells nclosed)
                        (function-args lfun)
     (declare (ignore allow-other-keys lexprp ncells))
-    (let* ((parent (parent-frame frame sg))           (vsp (if parent (1- (frame-vsp parent))))
+    (let* ((parent (parent-frame frame sg))
+           (vsp (if parent (1- (frame-vsp parent))))
            (child-vsp (1- (frame-vsp frame)))
            (frame-size (if parent (- vsp child-vsp) 0))
            (res nil)
@@ -88,13 +132,18 @@
                     (pop names)))
                 (setq rest (nreconc optionals rest))))
             (values (nreconc res rest) (nreverse types) (nreverse names)
-                    t nclosed)))))))#+ignore ;; original is potentially also a cause of fatal crashes when p is NIL(defun cfp-lfun (p stack-group &optional child)
+                    t nclosed)))))))
+
+
+(defun cfp-lfun (p stack-group &optional child)
   (declare (ignore stack-group child))
-  (cond   ((fake-stack-frame-p p)
+  (cond
+   ((fake-stack-frame-p p)
     (let ((fn (%fake-stack-frame.fn p))
           (lr (%fake-stack-frame.lr p)))
       (when (and (functionp fn) (fixnump lr))
-        (values fn (%fake-stack-frame.lr p)))))   ((fixnump p)
+        (values fn (%fake-stack-frame.lr p)))))
+   ((fixnump p)
     (without-interrupts                   ; Can't GC while we have lr in our hand
      (let ((fn (%frame-savefn p))
            (lr (%frame-savelr p)))
@@ -105,5 +154,8 @@
            (declare (fixnum pc-words))
            (when (and (>= pc-words 0) (< pc-words (uvsize function-vector)))
              (values fn
-                     (the fixnum (ash pc-words ppc::fixnum-shift)))))))))   (T (error "~s is not a valid stack frame" p))))) ; end redefine
-
+                     (the fixnum (ash pc-words ppc::fixnum-shift)))))))))
+   (T (error "~s is not a valid stack frame" p))))
+
+) ; end redefine
+
