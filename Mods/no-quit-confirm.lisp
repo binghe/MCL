@@ -1,0 +1,1 @@
+;;;-*- Mode: Lisp; Package: COMMON-LISP-USER -*-;;; A patch to ignore confirm dialog on quit(in-package :cl-user)#+MCL(let ((*warn-if-redefine* nil)      (*warn-if-redefine-kernel* nil))  (defun ccl::do-quit-dialog () T)  )
