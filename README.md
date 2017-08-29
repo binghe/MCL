@@ -1,5 +1,4 @@
-# mcl
-Rosetta-ized Macintosh Common Lisp
+# Rosetta-ized Macintosh Common Lisp
 
 (imported from
 https://code.google.com/archive/p/mcl/source/default/source)
@@ -14,6 +13,7 @@ see https://github.com/binghe/mcl/wiki
 
 ## For MCL Developers
 
+0. A PowerPC/Mac seems required for full rebuild of MCL source code
 1. It's recommended that all new changes were done in form of patches;
 2. All patches should be put in the "rmcl/Patches" directory with
 meaningful filenames.
