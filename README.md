@@ -1,5 +1,5 @@
-# rmcl
-Rosetta-ized Macintosh Common Lisp 6
+# mcl
+Rosetta-ized Macintosh Common Lisp
 
 (imported from
 https://code.google.com/archive/p/mcl/source/default/source)
@@ -10,7 +10,7 @@ https://code.google.com/archive/p/mcl/source/default/source)
 
 ## Installation
 
-see https://github.com/binghe/rmcl/wiki/BuildingMCL
+see https://github.com/binghe/mcl/wiki
 
 ## For MCL Developers
 
@@ -19,3 +19,6 @@ see https://github.com/binghe/rmcl/wiki/BuildingMCL
 meaningful filenames.
 3. Before sending PRs, execute `pre-checkin.sh`.
 
+## Other useful resources
+- mcl-ui-lib: https://github.com/aalpern/mcl-ui-lib
+- mcl-project-manager: https://github.com/aalpern/mcl-project-manager
