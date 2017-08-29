@@ -1,0 +1,6 @@
+/l1-cfsls/
+/bincarbon/
+*.cfsl
+/ppc-boot
+/ppc-boot.xSYM
+*.DS_Store
