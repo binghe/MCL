@@ -9,7 +9,7 @@ https://code.google.com/archive/p/mcl/source/default/source)
 
 ## Installation
 
-see https://github.com/binghe/mcl/wiki
+see https://github.com/binghe/mcl/wiki (Updated November 22, 2018)
 
 ## For MCL Developers
 
